@@ -1,0 +1,9 @@
+*.egg-info/
+*.pyc
+.cache/
+.coverage
+.installed.cfg
+bin/
+build/
+coverage-report/
+develop-eggs/
