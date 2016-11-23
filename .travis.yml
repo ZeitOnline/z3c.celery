@@ -6,7 +6,7 @@ install:
   - python bootstrap.py
   - bin/buildout
 script:
-  - bin/doc
   - bin/test
+  - bin/doc
 notifications:
     email: false
