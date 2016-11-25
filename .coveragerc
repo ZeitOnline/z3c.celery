@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = z3c.celery
+
+[report]
+precision = 2
+
+[html]
+directory = coverage-report
