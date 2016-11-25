@@ -17,11 +17,28 @@ setup(
     version='0.1.dev0',
 
     install_requires=[
+        'celery >= 4.0',
         'setuptools',
+        'transaction',
+        'ZODB',
+        'zope.app.appsetup',
+        'zope.app.wsgi',
+        'zope.authentication',
+        'zope.component',
+        'zope.exceptions',
+        'zope.interface',
+        'zope.publisher',
+        'zope.security',
+        'zope.principalregistry',
     ],
 
     extras_require={
         'test': [
+            'mock',
+            'plone.testing',
+            'redis',
+            'tblib',
+            'zope.traversing',
         ],
     },
 

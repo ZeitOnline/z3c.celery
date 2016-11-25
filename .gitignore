@@ -3,6 +3,8 @@
 .cache/
 .coverage
 .installed.cfg
+.mr.developer.cfg
+auto-checkout/
 bin/
 build/
 coverage-report/
