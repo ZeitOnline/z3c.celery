@@ -1,0 +1,28 @@
+<!-- This file is the equivalent of site.zcml for tests. -->
+
+<configure
+   xmlns="http://namespaces.zope.org/zope">
+
+  <include package="zope.component" />
+  <include package="zope.traversing" />
+  <include package="zope.container" />
+  <include package="zope.principalregistry" />
+  <include package="zope.principalregistry" file="meta.zcml" />
+
+  <include package="zope.app.appsetup" />
+
+  <principal
+    id="zope.user"
+    title="User"
+    description="test@example.com"
+    login="user"
+    password="userpw" />
+
+  <principal
+    id="example.user"
+    title="Ben Utzer"
+    description="test@example.com"
+    login="exampleuser"
+    password="userpw" />
+
+</configure>
