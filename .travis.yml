@@ -10,3 +10,5 @@ script:
   - bin/doc
 notifications:
     email: false
+services:
+  - redis
