@@ -63,8 +63,7 @@ def test_celery__TransactionAwareTask__delay__4(interaction, eager_celery_app):
     task_call.assert_called_with('1st param', datetime='now()')
 
 
-def test_celery__TransactionAwareTask__delay__5(
-        celery_session_worker, celery_app, zcml):
+def test_celery__TransactionAwareTask__delay__5(celery_session_worker, zcml):
     """It allows to run two tasks in a single session."""
     auth = zope.component.getUtility(
         zope.authentication.interfaces.IAuthentication)
@@ -145,8 +144,7 @@ def exception_task(context=None, datetime=None):
     raise RuntimeError()
 
 
-def test_celery__TransactionAwareTask____call____1(
-        celery_session_worker, celery_app):
+def test_celery__TransactionAwareTask____call____1(celery_session_worker):
     """It aborts the transaction in case of an error during task execution."""
     result = exception_task.delay()
     transaction.commit()
@@ -206,7 +204,7 @@ def test_celery__TransactionAwareTask____call____2__cov(
 
 
 def test_celery__TransactionAwareTask____call____3(
-        celery_session_worker, celery_app, zcml):
+        celery_session_worker, zcml):
     """It runs as given principal in asynchronous mode."""
     auth = zope.component.getUtility(
         zope.authentication.interfaces.IAuthentication)
