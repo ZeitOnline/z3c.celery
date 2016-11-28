@@ -124,8 +124,8 @@ def eager_celery_app(zope_conf):
 @pytest.fixture(scope='session')
 def celery_config(zope_conf):
     return {
-        'broker_url': 'redis://localhost:6379/0',
-        'result_backend': 'redis://localhost:6379/0',
+        'broker_url': 'redis://localhost:6379/1',
+        'result_backend': 'redis://localhost:6379/1',
         'worker_send_task_events': True,
         'task_send_sent_event': True,
         'task_remote_tracebacks': True,
