@@ -45,7 +45,7 @@ class VoteExceptionDataManager(NoopDatamanager):
 
 @pytest.mark.skip('Is traped in retry logic in tests.')
 def test_celery__TransactionAwareTask____call____2(
-        celery_session_worker, celery_app, interaction):
+        celery_session_worker, interaction):
     """It aborts the transaction and retries in case of an ConflictError."""
     result = conflict_task.apply_async(max_retries=0)
 
