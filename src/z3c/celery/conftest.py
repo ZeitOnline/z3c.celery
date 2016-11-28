@@ -8,8 +8,6 @@ import tempfile
 import transaction
 import z3c.celery
 import z3c.celery.testing
-import ZODB.DB
-import ZODB.FileStorage
 import zope.event
 import zope.principalregistry.principalregistry
 import zope.processlifetime
@@ -59,26 +57,6 @@ def interaction(automatic_transaction_begin):
     zope.security.management.endInteraction()
 
 
-@pytest.yield_fixture('function')
-def empty_zodb(zcml, storage_file):
-    """Create an empty ZODB prepared to create an address book inside.
-
-    Yields a tuple of (connection, rootFolder, zodb_object).
-
-    """
-    zodbDB = ZODB.DB.DB(ZODB.FileStorage.FileStorage(
-        file_name=storage_file))
-    # We want to set-up the DB with root (by zope.app.appsetup)
-    zope.event.notify(zope.processlifetime.DatabaseOpened(zodbDB))
-    transaction.commit()
-    connection = zodbDB.open()
-    rootFolder = connection.root()[
-        zope.app.publication.zopepublication.ZopePublication.root_name]
-    yield ZODBConnection(connection, rootFolder, zodbDB)
-    transaction.abort()
-    connection.close()
-
-
 @pytest.yield_fixture('session')
 def storage_file():
     with tempfile.NamedTemporaryFile() as storage_file:
@@ -115,7 +93,7 @@ def eager_celery_app(zope_conf):
     conf['ZOPE_CONF'] = zope_conf
     conf['task_always_eager'] = True
     conf['task_eager_propagates'] = True
-    yield
+    yield conf
     conf['task_eager_propagates'] = False
     conf['task_always_eager'] = False
     conf.pop('ZOPE_CONF')

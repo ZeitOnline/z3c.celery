@@ -1,21 +1,21 @@
-from z3c.celery.session import celery_session
 from celery import shared_task
-import celery.backends.base
-import celery.exceptions
+from z3c.celery.session import celery_session
+from zope.principalregistry.principalregistry import principalRegistry
+import ZODB.POSException
 import datetime
 import mock
+import plone.testing.zca
 import pytest
 import transaction
 import z3c.celery
 import z3c.celery.testing
-import ZODB.POSException
 import zope.authentication.interfaces
 import zope.security.management
 
 
-@shared_task
-def dummy_task(context=None, datetime=None):
-    """Dummy task to test our framework."""
+@z3c.celery.task
+def eager_task(context=None, datetime=None):
+    """Dummy task to be used together with `eager_celery_app`."""
 
 
 @shared_task
@@ -25,25 +25,19 @@ def get_principal_title_task():
     return interaction.participations[0].principal.title
 
 
-@shared_task
-def conflict_task(context=None, datetime=None):
-    """Dummy task which injects a DataManager that votes a ConflictError."""
-    transaction.get().join(VoteExceptionDataManager())
-
-
 now = datetime.datetime.now()
 
 
 def test_celery__TransactionAwareTask__delay__1():
     """It raises a TypeError if arguments are not JSON serializable."""
     with pytest.raises(TypeError):
-        dummy_task.delay(object(), datetime=now)
+        eager_task.delay(object(), datetime=now)
 
 
 def test_celery__TransactionAwareTask__delay__2(interaction):
     """It registers a task if arguments are JSON serializable."""
     assert 0 == len(celery_session)
-    dummy_task.delay('http://url.to/testcontent',
+    eager_task.delay('http://url.to/testcontent',
                      datetime='2016-01-01 12:00:00')
     assert 1 == len(celery_session)
 
@@ -52,7 +46,7 @@ def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
     with mock.patch(run_instantly, return_value=False):
-        dummy_task.delay('1st param', datetime='now()')
+        eager_task.delay('1st param', datetime='now()')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         zope.security.management.endInteraction()
@@ -64,15 +58,35 @@ def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
 
 def test_celery__TransactionAwareTask__delay__4(interaction, eager_celery_app):
     """It calls the original function directly if we are in eager mode."""
-    with mock.patch.object(dummy_task, 'run') as task_call:
-        dummy_task.delay('1st param', datetime='now()')
+    with mock.patch.object(eager_task, 'run') as task_call:
+        eager_task.delay('1st param', datetime='now()')
     task_call.assert_called_with('1st param', datetime='now()')
+
+
+def test_celery__TransactionAwareTask__delay__5(
+        celery_session_worker, celery_app, zcml):
+    """It allows to run two tasks in a single session."""
+    auth = zope.component.getUtility(
+        zope.authentication.interfaces.IAuthentication)
+    principal = auth.getPrincipal('example.user')
+    z3c.celery.testing.login_principal(principal)
+    result1 = get_principal_title_task.delay()
+
+    zope.security.management.endInteraction()
+    principal = auth.getPrincipal('zope.user')
+    z3c.celery.testing.login_principal(principal)
+    result2 = get_principal_title_task.delay()
+
+    transaction.commit()
+
+    assert 'Ben Utzer' == result1.get()
+    assert 'User' == result2.get()
 
 
 def test_celery__TransactionAwareTask__apply_async__1():
     """It raises a TypeError if arguments are not JSON serializable."""
     with pytest.raises(TypeError):
-        dummy_task.apply_async(
+        eager_task.apply_async(
             (object(),), {'datetime': now},
             task_id=now, countdown=now)
 
@@ -80,7 +94,7 @@ def test_celery__TransactionAwareTask__apply_async__1():
 def test_celery__TransactionAwareTask__apply_async__2(interaction):
     """It registers a task if arguments are JSON serializable."""
     assert 0 == len(celery_session)
-    dummy_task.apply_async(
+    eager_task.apply_async(
         ('http://url.to/testcontent',),
         {'datetime': '2016-01-01 12:00:00'},
         task_id=1, countdown=30)
@@ -92,7 +106,7 @@ def test_celery__TransactionAwareTask__apply_async__3(
     """It extracts the principal from the interaction if run in async mode."""
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
     with mock.patch(run_instantly, return_value=False):
-        dummy_task.apply_async(('1st param',), dict(datetime='now()'))
+        eager_task.apply_async(('1st param',), dict(datetime='now()'))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         zope.security.management.endInteraction()
@@ -105,8 +119,8 @@ def test_celery__TransactionAwareTask__apply_async__3(
 def test_celery__TransactionAwareTask__apply_async__4(
         interaction, eager_celery_app):
     """It calls the original function directly if we are in eager mode."""
-    with mock.patch.object(dummy_task, 'run') as task_call:
-        dummy_task.apply_async(('1st param',), dict(datetime='now()'))
+    with mock.patch.object(eager_task, 'run') as task_call:
+        eager_task.apply_async(('1st param',), dict(datetime='now()'))
     task_call.assert_called_with('1st param', datetime='now()')
 
 
@@ -117,7 +131,7 @@ def test_celery__TransactionAwareTask__apply_async__5(
     # of __call__ after the argument handling
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
     with mock.patch(run_instantly, return_value=False):
-        dummy_task.apply_async(('1st param',))
+        eager_task.apply_async(('1st param',))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         transaction.commit()
@@ -160,59 +174,10 @@ def test_celery__TransactionAwareTask____call____1__cov(
         with pytest.raises(RuntimeError):
             # We want to simulate a run in worker. The RuntimeError is raised
             # by the mock
-            dummy_task(_run_asynchronously_=True)
+            eager_task(_run_asynchronously_=True)
 
     assert task_call.called
     assert abort.called
-
-
-class NoopDatamanager(object):
-    """Datamanager which does nothing."""
-
-    def abort(self, trans):
-        pass
-
-    def commit(self, trans):
-        pass
-
-    def tpc_begin(self, trans):
-        pass
-
-    def tpc_abort(self, trans):
-        pass
-
-
-class VoteExceptionDataManager(NoopDatamanager):
-    """DataManager which raises an exception in tpc_vote."""
-
-    def tpc_vote(self, trans):
-        raise ZODB.POSException.ConflictError()
-
-    def sortKey(self):
-        # Make sure we are running after the in thread execution of the task so
-        # that we can throw an Error as last part of vote:
-        return '~~sort-me-last'
-
-
-@pytest.mark.skip('Is traped in retry logic in tests.')
-def test_celery__TransactionAwareTask____call____2(
-        celery_worker, celery_app, interaction):
-    """It aborts the transaction and retries in case of an ConflictError."""
-    result = conflict_task.apply_async(max_retries=0)
-
-    transaction.commit()
-    with pytest.raises(Exception) as err:
-        result.get()
-    # Celery wraps errors dynamically as celery.backends.base.<ErrorName>, so
-    # we have to dig deep here.
-    assert 'RuntimeError' == err.value.__class__.__name__
-
-    run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
-    with mock.patch(run_instantly, return_value=False):
-        conflict_task.delay()
-    zope.security.management.endInteraction()
-    with pytest.raises(celery.exceptions.MaxRetriesExceededError):
-        transaction.commit()
 
 
 def test_celery__TransactionAwareTask____call____2__cov(
@@ -233,7 +198,7 @@ def test_celery__TransactionAwareTask____call____2__cov(
             mock.patch(retry) as retry:
 
         zope.security.management.endInteraction()
-        dummy_task(_run_asynchronously_=True)
+        eager_task(_run_asynchronously_=True)
 
     assert task_call.called
     assert abort.called
@@ -241,7 +206,7 @@ def test_celery__TransactionAwareTask____call____2__cov(
 
 
 def test_celery__TransactionAwareTask____call____3(
-        celery_session_worker, celery_session_app, zcml):
+        celery_session_worker, celery_app, zcml):
     """It runs as given principal in asynchronous mode."""
     auth = zope.component.getUtility(
         zope.authentication.interfaces.IAuthentication)
@@ -267,3 +232,48 @@ def test_celery__TransactionAwareTask____call____3__cov(
             _run_asynchronously_=True, _principal_id_='example.user')
 
     assert "Ben Utzer" == result
+
+
+def test_celery__TransactionAwareTask__run_in_worker__1__cov(
+        interaction, eager_celery_app):
+    """It raises a ValueError if there is no `ZOPE_CONF` in the configuration.
+
+    As it is hard to collect coverage for sub-processes we use this test for
+    coverage only.
+    """
+    eager_celery_app['ZOPE_CONF'] = None
+
+    @z3c.celery.task
+    def unbound_task(context=None, datetime=None):
+        """Task which has not yet been bound.
+
+        This allows to change the configuration of it easily.
+        """
+
+    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
+    with mock.patch(configure_zope):
+
+        with pytest.raises(ValueError) as err:
+            unbound_task(_run_asynchronously_=True)
+        assert (
+            'Celery setting ZOPE_CONF not set, check celery worker config.' ==
+            str(err.value))
+
+
+def test_celery__TransactionAwareTask__configure_zope__1__cov(
+        eager_celery_app):
+    """It loads the ZCML file defined in `ZOPE_CONF`."""
+    # There is no example.user defined by default:
+    with pytest.raises(zope.authentication.interfaces.PrincipalLookupError):
+        principalRegistry.getPrincipal('example.user')
+
+    plone.testing.zca.pushGlobalRegistry()
+
+    # It gets created in the ZCML of `ZOPE_CONF`.
+    try:
+        eager_task(_run_asynchronously_=True, _principal_id_='example.user')
+        assert ('Ben Utzer' ==
+                principalRegistry.getPrincipal('example.user').title)
+    finally:
+        plone.testing.zca.popGlobalRegistry()
+        principalRegistry._clear()

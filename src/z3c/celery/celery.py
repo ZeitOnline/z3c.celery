@@ -9,7 +9,6 @@ import celery.utils
 import json
 import logging
 import logging.config
-import os
 import random
 import transaction
 import transaction.interfaces
@@ -26,24 +25,12 @@ log = logging.getLogger(__name__)
 
 
 class TransactionAwareTask(celery.Task):
-    """Wraps every Task execution in a transaction begin/commit/abort.
-    If 'ZOPE_PRINCIPAL' is set in the celery configuration, also sets up a
-    zope.security interaction.
+    """Wrap every Task execution in a transaction begin/commit/abort.
 
     (Code inspired by gocept.runner.runner.MainLoop)
     """
 
-    abstract = True  # Base class. Don't register as an excecutable task.
-
-    @classmethod
-    def bind(cls, app):
-        # Unfortunately, Celery insists on setting up everything at import
-        # time, which doesn't work for our clients, since the Zope
-        # product-configuration is not available then. Thus we perform an
-        # additional bind() in the configure_celery_app event handler.
-        if getattr(app, 'configure_done', False):
-            return app
-        return super(TransactionAwareTask, cls).bind(app)
+    abstract = True  # Base class. Don't register as an executable task.
 
     def __call__(self, *args, **kw):
         """Run the task.
@@ -71,9 +58,8 @@ class TransactionAwareTask(celery.Task):
     def run_in_worker(self, principal_id, args, kw):
         configfile = self.app.conf.get('ZOPE_CONF')
         if not configfile:
-            raise ValueError(
-                'Celery setting ZOPE_CONF not set, check in '
-                'CELERY_CONFIG=%s' % os.environ.get('CELERY_CONFIG'))
+            raise ValueError('Celery setting ZOPE_CONF not set, '
+                             'check celery worker config.')
 
         old_site = zope.component.hooks.getSite()
 
