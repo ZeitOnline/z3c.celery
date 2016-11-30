@@ -42,12 +42,17 @@ class TransactionAwareTask(celery.Task):
                                       run tasks easily inline)
             _principal_id_ ... run asynchronous task as this user, ignored if
                                running synchronously (optional)
+            _task_id_ ... id of the task
 
         Returns whatever the task returns itself.
 
         """
         running_asynchronously = kw.pop('_run_asynchronously_', False)
         principal_id = kw.pop('_principal_id_', None)
+        # There is currently no other way to get the task_id to the worker, see
+        # https://github.com/celery/celery/issues/2633
+        task_id = kw.pop('_task_id_', None)
+        self.task_id = task_id
 
         if running_asynchronously:
             result = self.run_in_worker(principal_id, args, kw)
@@ -118,10 +123,13 @@ class TransactionAwareTask(celery.Task):
         if self.run_instantly():
             self.__call__(*args, **kw)
         elif not kw['_principal_id_']:
+            # Tests run a `ping.delay()` task beforehand which we handle here
+            # separately:
             return super(TransactionAwareTask, self).apply_async(
                 args, kw, task_id=task_id)
         else:
             kw['_run_asynchronously_'] = self.run_asynchronously()
+            kw['_task_id_'] = task_id
             celery_session.add_call(
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id=task_id)
@@ -141,6 +149,7 @@ class TransactionAwareTask(celery.Task):
         else:
             kw['_principal_id_'] = self._get_current_principal_id()
             kw['_run_asynchronously_'] = self.run_asynchronously()
+            kw['_task_id_'] = task_id
             celery_session.add_call(
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id, *arguments, **options)
