@@ -8,6 +8,8 @@ Motivation: Celery 4.x provides py.test fixtures. There is some infrastructure
 in this package to use these fixtures together with `plone.testing.Layer`.
 The following steps are required to set the layers up correctly:
 
+In your package depend on ``z3c.celery[layer]``.
+
 Create a layer which provides the following resources:
 
 * ``celery_config``: dict of config options for the celery app. It has to

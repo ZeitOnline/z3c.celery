@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from mock import Mock
+import mock
 import celery.contrib.pytest
 import plone.testing
 
@@ -15,7 +15,7 @@ class EndToEndLayer(plone.testing.Layer):
     """
 
     def setUp(self):
-        request_mock = Mock()
+        request_mock = mock.Mock()
         request_mock.node.get_marker.return_value = {}
         self['celery_app_fixture'] = celery.contrib.pytest.celery_session_app(
             request_mock,
