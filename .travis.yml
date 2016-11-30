@@ -3,11 +3,9 @@ sudo: false
 python:
   - 2.7
 install:
-  - python bootstrap.py
-  - bin/buildout
+  - pip install tox
 script:
-  - bin/test
-  - bin/doc
+  - tox
 notifications:
     email: false
 services:
