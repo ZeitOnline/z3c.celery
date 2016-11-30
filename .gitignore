@@ -3,6 +3,7 @@
 *.xml
 .cache/
 .coverage
+.coverage.*
 .installed.cfg
 .mr.developer.cfg
 .tox/
