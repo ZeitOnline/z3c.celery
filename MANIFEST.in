@@ -1,0 +1,9 @@
+include *.rst
+include *.txt
+include .coveragerc
+include pytest.ini
+include tox.ini
+recursive-include doc *.html
+recursive-include doc *.py
+recursive-include doc *.rst
+recursive-include src *.zcml
