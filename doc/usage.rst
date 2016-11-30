@@ -1,6 +1,22 @@
 Usage
 =====
 
+Accessing the ``task_id`` in the task
+-------------------------------------
+
+There seems currently no way to get the task_id from inside the task when it is
+a shared task. The task implementation in ``z3c.celery`` provides a solution.
+You have to bind the shared task. This allows you to access the task instance
+as first parameter of the task function. The ``task_id`` is stored there on the
+``task_id`` attribute. Example::
+
+    @shared_task(bind=True)
+    def get_task_id(self):
+        """Get the task id of the job."""
+        return self.task_id
+
+
+
 Running end to end tests using layers
 -------------------------------------
 
