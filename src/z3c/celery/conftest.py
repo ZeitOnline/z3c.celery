@@ -66,23 +66,11 @@ def storage_file():
 @pytest.yield_fixture('session')
 def zope_conf(storage_file):
     with tempfile.NamedTemporaryFile() as conf:
-        conf.write("""
-# Identify the component configuration used to define the site:
-site-definition {ftesting_path}
-
-<zodb>
-  <filestorage>
-    path {zodb_path}
-  </filestorage>
-</zodb>
-
-# logging is done using WSGI, but we need an empty entry here because
-# eventlog is required.
-<eventlog>
-</eventlog>
-""".format(zodb_path=storage_file,
-           ftesting_path=pkg_resources.resource_filename(
-               'z3c.celery', 'ftesting.zcml')))
+        conf.write(z3c.celery.testing.ZOPE_CONF_TEMPLATE.format(
+            zodb_path=storage_file,
+            ftesting_path=pkg_resources.resource_filename(
+                'z3c.celery', 'ftesting.zcml')),
+            product_config='')
         conf.flush()
         yield conf.name
 
