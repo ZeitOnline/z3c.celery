@@ -1,9 +1,11 @@
 *.egg-info/
 *.pyc
+*.xml
 .cache/
 .coverage
 .installed.cfg
 .mr.developer.cfg
+.tox/
 auto-checkout/
 bin/
 build/
