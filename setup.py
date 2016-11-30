@@ -36,11 +36,15 @@ setup(
         'test': [
             'gocept.pytestlayer',
             'mock',
-            'plone.testing',
             'redis',
             'tblib',
             'zope.traversing',
         ],
+        'layer': [  # use this extra when using the EndToEndLayer
+            'mock',
+            'plone.testing',
+        ],
+
     },
 
     entry_points={
