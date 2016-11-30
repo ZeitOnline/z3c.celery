@@ -36,6 +36,7 @@ setup(
         'test': [
             'gocept.pytestlayer',
             'mock',
+            'plone.testing',
             'redis',
             'tblib',
             'zope.traversing',
