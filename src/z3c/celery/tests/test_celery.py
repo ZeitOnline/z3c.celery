@@ -1,3 +1,4 @@
+from .shared_tasks import get_principal_title_task
 from celery import shared_task
 from z3c.celery.session import celery_session
 from zope.principalregistry.principalregistry import principalRegistry
@@ -16,13 +17,6 @@ import zope.security.management
 @z3c.celery.task
 def eager_task(context=None, datetime=None):
     """Dummy task to be used together with `eager_celery_app`."""
-
-
-@shared_task
-def get_principal_title_task():
-    """Task returning the principal's title used to run it."""
-    interaction = zope.security.management.getInteraction()
-    return interaction.participations[0].principal.title
 
 
 now = datetime.datetime.now()

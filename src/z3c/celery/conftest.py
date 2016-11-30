@@ -126,7 +126,7 @@ def celery_enable_logging():
 
 @pytest.fixture(scope='session')
 def celery_includes():
-    return ('z3c.celery.tests.test_celery',)
+    return ('z3c.celery.tests.shared_tasks',)
 
 
 @pytest.fixture(scope='session')
