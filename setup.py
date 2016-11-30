@@ -34,6 +34,7 @@ setup(
 
     extras_require={
         'test': [
+            'gocept.pytestlayer',
             'mock',
             'plone.testing',
             'redis',

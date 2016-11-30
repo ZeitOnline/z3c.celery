@@ -28,6 +28,7 @@ html_sidebars = {
     '**': ['globaltoc.html', 'searchbox.html', 'project-links.html'],
 }
 
+autosummary_generate = True
 
 # We use the autosummary extension to build API docs from source code.
 # However, this extension doesn't update the generated docs if the source

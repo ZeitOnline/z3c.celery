@@ -3,6 +3,7 @@
 .. toctree::
     :maxdepth: 2
 
+    usage
     api
     about
     changes

@@ -5,4 +5,5 @@ API Reference
 .. autosummary::
     :toctree: ./_api/
 
-..  z3c.celery.foo
+    z3c.celery.layer
+    z3c.celery.celery
