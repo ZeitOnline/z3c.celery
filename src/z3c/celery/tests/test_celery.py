@@ -39,7 +39,8 @@ def test_celery__TransactionAwareTask__delay__2(interaction):
 def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
-    with mock.patch(run_instantly, return_value=False):
+    with mock.patch(run_instantly, return_value=False), \
+            mock.patch('celery.utils.gen_unique_id', return_value='<task_id>'):
         eager_task.delay('1st param', datetime='now()')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
@@ -47,7 +48,8 @@ def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
         transaction.commit()
     task_call.assert_called_with(
         '1st param', datetime='now()',
-        _run_asynchronously_=True, _principal_id_=u'zope.user')
+        _run_asynchronously_=True, _principal_id_=u'zope.user',
+        _task_id_='<task_id>')
 
 
 def test_celery__TransactionAwareTask__delay__4(interaction, eager_celery_app):
@@ -99,14 +101,16 @@ def test_celery__TransactionAwareTask__apply_async__3(
     """It extracts the principal from the interaction if run in async mode."""
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
     with mock.patch(run_instantly, return_value=False):
-        eager_task.apply_async(('1st param',), dict(datetime='now()'))
+        eager_task.apply_async(('1st param',), dict(datetime='now()'),
+                               task_id='<task_id>')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         zope.security.management.endInteraction()
         transaction.commit()
     task_call.assert_called_with(
         '1st param', datetime='now()',
-        _run_asynchronously_=True, _principal_id_=u'zope.user')
+        _run_asynchronously_=True, _principal_id_=u'zope.user',
+        _task_id_='<task_id>')
 
 
 def test_celery__TransactionAwareTask__apply_async__4(
@@ -124,12 +128,13 @@ def test_celery__TransactionAwareTask__apply_async__5(
     # of __call__ after the argument handling
     run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
     with mock.patch(run_instantly, return_value=False):
-        eager_task.apply_async(('1st param',))
+        eager_task.apply_async(('1st param',), task_id='<task_id>')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         transaction.commit()
     task_call.assert_called_with(
-        '1st param', _run_asynchronously_=True, _principal_id_=u'zope.user')
+        '1st param', _run_asynchronously_=True, _principal_id_=u'zope.user',
+        _task_id_='<task_id>')
 
 
 @shared_task
@@ -224,6 +229,20 @@ def test_celery__TransactionAwareTask____call____3__cov(
             _run_asynchronously_=True, _principal_id_='example.user')
 
     assert "Ben Utzer" == result
+
+
+@shared_task(bind=True)
+def get_task_id(self):
+    """Get the task id of the job."""
+    return self.task_id  # pragma: no cover
+
+
+def test_celery__TransactionAwareTask____call____4(
+        celery_session_worker, interaction):
+    """It propagates the task_id to the worker."""
+    job = get_task_id.apply_async(task_id='my-nice-task-id')
+    transaction.commit()
+    assert 'my-nice-task-id' == job.get()
 
 
 def test_celery__TransactionAwareTask__run_in_worker__1__cov(
