@@ -32,6 +32,7 @@ class CelerySession(threading.local):
         self.reset()
 
     def __len__(self):
+        """Number of tasks in the session."""
         return len(self.tasks)
 
 
@@ -68,8 +69,9 @@ class CeleryDataManager(object):
     def sortKey(self):
         # Sort last, so that sending to celery is done after all other
         # DataManagers signalled an okay.
-        return "~zeit.cms.celery"
+        return "~z3c.celery"
 
     def __repr__(self):
+        """Custom repr."""
         return '<{0.__module__}.{0.__name__} for {1}, {2}>'.format(
             self.__class__, transaction.get(), self.session)
