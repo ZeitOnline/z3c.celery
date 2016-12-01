@@ -25,8 +25,6 @@ class SettingsLayer(plone.testing.Layer):
 
         self['celery_config'] = z3c.celery.conftest.celery_config(
             next(self['zope_conf_fixture']))
-        self['celery_config']['broker_url'] = 'redis://localhost:6379/0'
-        self['celery_config']['result_backend'] = 'redis://localhost:6379/0'
         self['celery_parameters'] = z3c.celery.conftest.celery_parameters()
         self['celery_includes'] = ['z3c.celery.tests.shared_tasks']
 
