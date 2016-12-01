@@ -1,2 +1,4 @@
-.. include:: ../HACKING.rst
+License
+=======
+
 .. literalinclude:: ../LICENSE.txt
