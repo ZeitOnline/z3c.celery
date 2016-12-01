@@ -205,3 +205,4 @@ def get_config_source():
 CELERY = celery.Celery(
     __name__, task_cls=TransactionAwareTask,
     strict_typing=False, config_source=get_config_source())
+CELERY.set_default()
