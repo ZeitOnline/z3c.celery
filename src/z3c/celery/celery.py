@@ -187,5 +187,21 @@ class TransactionAwareTask(celery.Task):
         return principal_id
 
 
+def get_config_source():
+    """Provide the correct source to configure the app.
+
+    In case the application uses grok, it is possible that a default app is
+    instantiated before our app (see below). The default app gets the
+    configuration specified in celeryconfig.py and our app is not configured
+    with it.
+    """
+    try:
+        config_source = celery.app.default_app.conf
+    except AttributeError:
+        config_source = None
+    return config_source
+
+
 CELERY = celery.Celery(
-    __name__, task_cls=TransactionAwareTask, strict_typing=False)
+    __name__, task_cls=TransactionAwareTask,
+    strict_typing=False, config_source=get_config_source())
