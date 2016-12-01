@@ -5,6 +5,12 @@ z3c.celery.celery
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      get_config_source
+   
    
 
    
