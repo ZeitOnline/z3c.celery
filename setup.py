@@ -71,7 +71,6 @@ Programming Language :: Python :: Implementation :: CPython
     description=__doc__.strip(),
     long_description='\n\n'.join(open(project_path(name)).read() for name in (
         'README.rst',
-        'HACKING.rst',
         'CHANGES.rst',
     )),
 
