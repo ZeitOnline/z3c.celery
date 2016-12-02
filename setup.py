@@ -4,7 +4,6 @@
 """
 
 from setuptools import setup, find_packages
-import glob
 
 setup(
     name='z3c.celery',
@@ -75,12 +74,9 @@ Topic :: Software Development :: Testing
         'README.rst',
         'CHANGES.rst',
     )),
-
     namespace_packages=['z3c'],
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
-    data_files=[('', glob.glob('*.txt')),
-                ('', glob.glob('*.rst'))],
     zip_safe=False,
 )
