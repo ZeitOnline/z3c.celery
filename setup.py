@@ -1,6 +1,6 @@
 # This should be only one line. If it must be multi-line, indent the second
 # line onwards to keep the PKG-INFO file format intact.
-"""Celery integration with Zope 3.
+"""Integration of Celery 4 with Zope 3.
 """
 
 from setuptools import setup, find_packages
@@ -54,13 +54,21 @@ setup(
     url='https://github.com/ZeitOnline/z3c.celery',
     keywords='celery Zope transaction',
     classifiers="""\
+Development Status :: 3 - Alpha
+Framework :: Zope3
+Intended Audience :: Developers
 License :: OSI Approved
 License :: OSI Approved :: BSD License
+Natural Language :: English
+Operating System :: OS Independent
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
 Programming Language :: Python :: 2 :: Only
+Programming Language :: Python :: 2.7
 Programming Language :: Python :: Implementation :: CPython
+Topic :: Database
+Topic :: Software Development
+Topic :: Software Development :: Testing
 """[:-1].split('\n'),
     description=__doc__.strip(),
     long_description='\n\n'.join(open(name).read() for name in (
