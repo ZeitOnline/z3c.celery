@@ -1,6 +1,39 @@
 Usage
 =====
 
+Worker setup
+------------
+
+If you have a python file named ``celeryconfig.py`` in your working directory,
+you can tart the celery worker using the following command:
+
+.. code-block:: console
+
+    $ celery worker --app=z3c.celery.CELERY --config=celeryconfig
+
+The `celeryconfig`_ can include all default celery config options. In addition
+the variable ``ZOPE_CONF`` pointing to your ``zope.conf`` has to be present.
+This ``celeryconfig.py`` and the referenced ``zope.conf`` should be identical to
+the ones, your Zope is started with.
+
+Example::
+
+    ZOPE_CONF = '/path/to/zope.conf'
+    broker_url = 'redis://localhost:6379/0'
+    result_backend = 'redis://localhost:6379/0'
+    imports = ['my.tasks']
+
+
+.. _`celeryconfig` : http://docs.celeryproject.org/en/latest/userguide/configuration.html
+
+
+Integration with Zope
+---------------------
+
+To successful configure Celery in Zope place the ``celeryconfig.py`` in the
+``PYTHONPATH``. The configuration will be taken from there.
+
+
 Accessing the ``task_id`` in the task
 -------------------------------------
 
@@ -14,7 +47,6 @@ as first parameter of the task function. The ``task_id`` is stored there on the
     def get_task_id(self):
         """Get the task id of the job."""
         return self.task_id
-
 
 
 Running end to end tests using layers
