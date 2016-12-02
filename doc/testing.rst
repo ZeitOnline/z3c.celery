@@ -7,6 +7,6 @@ worker should be connected to that database.
 
 To run the actual tests, simply run `tox`_ in the package root directory.
 
-.. _`tox`:https://tox.readthedocs.io/en/latest/
-
 Together with the tests, this documentation will be build by `tox`_.
+
+.. _`tox` : https://tox.readthedocs.io/en/latest/
