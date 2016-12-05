@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import collections
+import celery.contrib.testing.app
 import pkg_resources
 import plone.testing.zca
 import plone.testing.zodb
@@ -7,6 +8,7 @@ import pytest
 import tempfile
 import transaction
 import z3c.celery
+import z3c.celery.celery
 import z3c.celery.testing
 import zope.event
 import zope.principalregistry.principalregistry
@@ -78,11 +80,14 @@ def zope_conf(storage_file):
 
 @pytest.yield_fixture('function')
 def eager_celery_app(zope_conf):
-    conf = z3c.celery.celery.CELERY.conf
+    app = z3c.celery.CELERY
+    conf = app.conf
     conf['ZOPE_CONF'] = zope_conf
     conf['task_always_eager'] = True
     conf['task_eager_propagates'] = True
-    yield conf
+    with celery.contrib.testing.app.setup_default_app(app):
+        app.set_current()
+        yield conf
     conf['task_eager_propagates'] = False
     conf['task_always_eager'] = False
     conf.pop('ZOPE_CONF')

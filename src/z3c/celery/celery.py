@@ -120,6 +120,7 @@ class TransactionAwareTask(celery.Task):
         task_id = celery.utils.gen_unique_id()
 
         kw['_principal_id_'] = self._get_current_principal_id()
+        kw['_task_id_'] = task_id
         if self.run_instantly():
             self.__call__(*args, **kw)
         elif not kw['_principal_id_']:
@@ -129,7 +130,6 @@ class TransactionAwareTask(celery.Task):
                 args, kw, task_id=task_id)
         else:
             kw['_run_asynchronously_'] = self.run_asynchronously()
-            kw['_task_id_'] = task_id
             celery_session.add_call(
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id=task_id)
@@ -139,17 +139,17 @@ class TransactionAwareTask(celery.Task):
             self, args=(), kw=None, task_id=None, *arguments, **options):
         self._assert_json_serializable(
             args, kw, task_id, *arguments, **options)
-        if task_id is None:
-            task_id = celery.utils.gen_unique_id()
         if kw is None:
             kw = {}
+        if task_id is None:
+            task_id = celery.utils.gen_unique_id()
+        kw['_task_id_'] = task_id
 
         if self.run_instantly():
             self.__call__(*args, **kw)
         else:
             kw['_principal_id_'] = self._get_current_principal_id()
             kw['_run_asynchronously_'] = self.run_asynchronously()
-            kw['_task_id_'] = task_id
             celery_session.add_call(
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id, *arguments, **options)
