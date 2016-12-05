@@ -252,7 +252,7 @@ def test_celery__TransactionAwareTask__run_in_worker__1__cov(
     As it is hard to collect coverage for sub-processes we use this test for
     coverage only.
     """
-    eager_celery_app['ZOPE_CONF'] = None
+    eager_celery_app.conf['ZOPE_CONF'] = None
 
     @z3c.celery.task
     def unbound_task(context=None, datetime=None):
