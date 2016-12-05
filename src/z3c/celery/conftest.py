@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import collections
+import copy
 import celery.contrib.testing.app
 import pkg_resources
 import plone.testing.zca
@@ -82,15 +83,14 @@ def zope_conf(storage_file):
 def eager_celery_app(zope_conf):
     app = z3c.celery.CELERY
     conf = app.conf
+    old_conf = copy.deepcopy(conf)
     conf['ZOPE_CONF'] = zope_conf
     conf['task_always_eager'] = True
     conf['task_eager_propagates'] = True
     with celery.contrib.testing.app.setup_default_app(app):
         app.set_current()
-        yield conf
-    conf['task_eager_propagates'] = False
-    conf['task_always_eager'] = False
-    conf.pop('ZOPE_CONF')
+        yield app
+    app.conf = old_conf
 
 
 @pytest.fixture(scope='session')
