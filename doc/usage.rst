@@ -49,6 +49,23 @@ as first parameter of the task function. The ``task_id`` is stored there on the
         return self.task_id
 
 
+Logging
+-------
+
+``z3c.celery`` provides a special formatter for the python logging module,
+which can also be used as a generic formatter as it will omit task specific
+output if there is none. It allows to include task id and task name of the
+current task in the log message if they are available. Include it in your
+paste ini:
+
+.. code-block:: ini
+
+    [formatter_generic]
+    class = z3c.celery.logging.TaskFormatter
+    format = %(asctime)s %(task_name)s %(task_id)s %(message)s
+
+
+
 Running end to end tests using layers
 -------------------------------------
 
