@@ -16,15 +16,21 @@ the variable ``ZOPE_CONF`` pointing to your ``zope.conf`` has to be present.
 This ``celeryconfig.py`` and the referenced ``zope.conf`` should be identical to
 the ones, your Zope is started with.
 
+Additionally you can specify a variable ``LOGGING_INI`` pointing to a logging
+config (an ini file in `configuration file format`_, might be your paste.ini).
+See `Logging`_ for details.
+
 Example::
 
     ZOPE_CONF = '/path/to/zope.conf'
+    LOGGING_INI = '/path/to/paste.ini'
     broker_url = 'redis://localhost:6379/0'
     result_backend = 'redis://localhost:6379/0'
     imports = ['my.tasks']
 
 
 .. _`celeryconfig` : http://docs.celeryproject.org/en/latest/userguide/configuration.html
+.. _`configuration file format` : https://docs.python.org/2/library/logging.config.html#configuration-file-format
 
 
 Integration with Zope

@@ -4,9 +4,11 @@ from z3c.celery.session import celery_session
 from zope.principalregistry.principalregistry import principalRegistry
 import ZODB.POSException
 import datetime
+import logging
 import mock
 import plone.testing.zca
 import pytest
+import tempfile
 import transaction
 import z3c.celery
 import z3c.celery.testing
@@ -288,3 +290,59 @@ def test_celery__TransactionAwareTask__configure_zope__1__cov(
     finally:
         plone.testing.zca.popGlobalRegistry()
         principalRegistry._clear()
+
+
+LOGGING_TEMPLATE = """
+[loggers]
+keys = root, root
+
+[handlers]
+keys = logfile
+
+[formatters]
+keys = taskformatter
+
+[logger_root]
+level = DEBUG
+handlers = logfile
+qualname = root
+
+[handler_logfile]
+class = FileHandler
+formatter = taskformatter
+args = ('{filename}',)
+
+[formatter_taskformatter]
+class = z3c.celery.logging.TaskFormatter
+format = task_id: %(task_id)s name: %(task_name)s %(message)s
+"""
+
+
+def test_celery__TransactionAwareTask__setup_logging__1__cov(
+        interaction, eager_celery_app, zcml):
+    """It loads the ZCML file defined in `ZOPE_CONF`."""
+
+    @z3c.celery.task
+    def simple_log():
+        """Just log something."""
+        log = logging.getLogger(__name__)
+        log.debug('Hello Log!')
+
+    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
+
+    with tempfile.NamedTemporaryFile(delete=False) as logging_ini, \
+            tempfile.NamedTemporaryFile(delete=False) as logfile:
+        logging_ini.write(LOGGING_TEMPLATE.format(filename=logfile.name))
+        logging_ini.flush()
+        eager_celery_app.conf['LOGGING_INI'] = logging_ini.name
+
+        with mock.patch(configure_zope):
+            zope.security.management.endInteraction()
+            simple_log(
+                _run_asynchronously_=True, _principal_id_='example.user')
+
+        logfile.seek(0)
+        log_result = logfile.read()
+
+        assert ('task_id: <unknown> name: z3c.celery.tests.test_celery.'
+                'simple_log Hello Log!\n' == log_result)
