@@ -9,11 +9,12 @@ import celery.utils
 import json
 import logging
 import logging.config
+import os.path
 import random
 import transaction
 import transaction.interfaces
-import zope.authentication.interfaces
 import zope.app.wsgi
+import zope.authentication.interfaces
 import zope.component
 import zope.component.hooks
 import zope.exceptions.log
@@ -52,7 +53,8 @@ class TransactionAwareTask(celery.Task):
         # There is currently no other way to get the task_id to the worker, see
         # https://github.com/celery/celery/issues/2633
         task_id = kw.pop('_task_id_', None)
-        self.task_id = task_id
+        if task_id:
+            self.task_id = task_id
 
         if running_asynchronously:
             result = self.run_in_worker(principal_id, args, kw)
@@ -65,6 +67,10 @@ class TransactionAwareTask(celery.Task):
         if not configfile:
             raise ValueError('Celery setting ZOPE_CONF not set, '
                              'check celery worker config.')
+
+        logging_ini = self.app.conf.get('LOGGING_INI')
+        if logging_ini:
+            self.setup_logging(logging_ini)
 
         old_site = zope.component.hooks.getSite()
 
@@ -114,6 +120,13 @@ class TransactionAwareTask(celery.Task):
         root_folder = db.open().root()['Application']
         zope.component.hooks.setSite(root_folder)
         return db
+
+    def setup_logging(self, paste_ini):
+        """Makes the loglevel finely configurable via a config file."""
+        config_file = os.path.abspath(paste_ini)
+        logging.config.fileConfig(config_file, dict(
+            __file__=config_file,
+            here=os.path.dirname(config_file)))
 
     def delay(self, *args, **kw):
         self._assert_json_serializable(*args, **kw)
