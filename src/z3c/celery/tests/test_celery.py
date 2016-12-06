@@ -80,6 +80,24 @@ def test_celery__TransactionAwareTask__delay__5(celery_session_worker, zcml):
     assert 'User' == result2.get()
 
 
+@shared_task
+def hello_task():
+    """Task which returns something simple."""
+    return 'Hello'
+
+
+def test_celery__TransactionAwareTask__delay__6(celery_session_worker):
+    """It returns the result of the task via `get()` in async mode."""
+    result = hello_task.delay()
+    assert 'Hello' == result.get()
+
+
+def test_celery__TransactionAwareTask__delay__7(eager_celery_app):
+    """It returns the result of the task via `get()` in eager mode."""
+    result = hello_task.delay()
+    assert 'Hello' == result.get()
+
+
 def test_celery__TransactionAwareTask__apply_async__1():
     """It raises a TypeError if arguments are not JSON serializable."""
     with pytest.raises(TypeError):
@@ -137,6 +155,22 @@ def test_celery__TransactionAwareTask__apply_async__5(
     task_call.assert_called_with(
         '1st param', _run_asynchronously_=True, _principal_id_=u'zope.user',
         _task_id_='<task_id>')
+
+
+def test_celery__TransactionAwareTask__apply_async__6(celery_session_worker):
+    """It returns the result of the task via `get()` in async mode."""
+    result = hello_task.apply_async(task_id='<task_id>')
+    transaction.commit()
+    assert 'Hello' == result.get()
+    assert '<task_id>' == result.id
+
+
+def test_celery__TransactionAwareTask__apply_async__7(eager_celery_app):
+    """It returns the result of the task via `get()` in eager mode."""
+    result = hello_task.apply_async(task_id='<task_id>')
+    transaction.commit()
+    assert 'Hello' == result.get()
+    assert '<task_id>' == result.id
 
 
 @shared_task
