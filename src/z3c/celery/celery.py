@@ -63,10 +63,6 @@ class TransactionAwareTask(celery.Task):
         return result
 
     def run_in_worker(self, principal_id, args, kw):
-        configfile = self.app.conf.get('ZOPE_CONF')
-        if not configfile:
-            raise ValueError('Celery setting ZOPE_CONF not set, '
-                             'check celery worker config.')
 
         logging_ini = self.app.conf.get('LOGGING_INI')
         if logging_ini:
@@ -74,7 +70,7 @@ class TransactionAwareTask(celery.Task):
 
         old_site = zope.component.hooks.getSite()
 
-        db = self.configure_zope(configfile)
+        db = self.configure_zope()
         self.transaction_begin(principal_id)
         try:
             result = super(TransactionAwareTask, self).__call__(
@@ -115,9 +111,9 @@ class TransactionAwareTask(celery.Task):
             zope.authentication.interfaces.IAuthentication)
         return auth.getPrincipal(principal_id)
 
-    def configure_zope(self, configfile):
-        db = zope.app.wsgi.config(configfile)
-        root_folder = db.open().root()['Application']
+    def configure_zope(self):
+        db = self.app.conf.get('ZODB')
+        root_folder = self.app.conf.get('ZOPE_APP')
         zope.component.hooks.setSite(root_folder)
         return db
 
@@ -200,6 +196,40 @@ class TransactionAwareTask(celery.Task):
         return principal_id
 
 
+class ZopeLoader(celery.loaders.app.AppLoader):
+    """Sets up the Zope environment in the Worker processes.
+
+    (Code inspired by gocept.runner.runner.init)
+    """
+
+    def on_worker_process_init(self):
+        conf = self.app.conf
+        configfile = conf.get('ZOPE_CONF')
+        if not configfile:
+            raise ValueError(
+                'Celery setting ZOPE_CONF not set, '
+                'check celery worker config.')
+
+        db = zope.app.wsgi.config(configfile)
+        conf['ZOPE_APP'] = db.open().root()['Application']
+        conf['ZODB'] = db
+
+    def on_worker_shutdown(self):
+        if 'ZODB' in self.app.conf:
+            self.app.conf['ZODB'].close()
+
+
+class ZopeBootstep(celery.bootsteps.StartStopStep):
+    """Manages the setup of the Zope environment in the Worker main process.
+    """
+
+    def start(self, parent):
+        parent.app.loader.on_worker_process_init()
+
+    def stop(self, parent):
+        parent.app.loader.on_worker_shutdown()
+
+
 def get_config_source():
     """Provide the correct source to configure the app.
 
@@ -216,6 +246,6 @@ def get_config_source():
 
 
 CELERY = celery.Celery(
-    __name__, task_cls=TransactionAwareTask,
+    __name__, task_cls=TransactionAwareTask, loader=ZopeLoader,
     strict_typing=False, config_source=get_config_source())
 CELERY.set_default()

@@ -110,6 +110,7 @@ def celery_parameters():
     return {
         'task_cls': z3c.celery.celery.TransactionAwareTask,
         'strict_typing': False,
+        'loader': z3c.celery.celery.ZopeLoader,
     }
 
 

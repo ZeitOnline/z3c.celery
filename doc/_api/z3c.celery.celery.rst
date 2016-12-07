@@ -20,6 +20,8 @@ z3c.celery.celery
    .. autosummary::
    
       TransactionAwareTask
+      ZopeBootstep
+      ZopeLoader
    
    
 
