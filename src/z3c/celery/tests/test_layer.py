@@ -26,6 +26,7 @@ class SettingsLayer(plone.testing.Layer):
         self['celery_config'] = z3c.celery.conftest.celery_config(
             next(self['zope_conf_fixture']))
         self['celery_parameters'] = z3c.celery.conftest.celery_parameters()
+        self['celery_worker_parameters'] = {'queues': ('hiprio', 'celery')}
         self['celery_includes'] = ['z3c.celery.tests.shared_tasks']
 
     def tearDown(self):
@@ -36,6 +37,7 @@ class SettingsLayer(plone.testing.Layer):
         del self['celery_config']
         del self['celery_includes']
         del self['celery_parameters']
+        del self['celery_worker_parameters']
 
 
 SETTINGS_LAYER = SettingsLayer()
@@ -56,8 +58,8 @@ class EndToEndLayerTests(unittest.TestCase):
             zope.authentication.interfaces.IAuthentication)
         principal = auth.getPrincipal('example.user')
         z3c.celery.testing.login_principal(principal)
-        result = get_principal_title_task.delay()
+        result = get_principal_title_task.apply_async(queue='hiprio')
 
         transaction.commit()
 
-        assert 'Ben Utzer' == result.get()
+        assert 'Ben Utzer' == result.get(timeout=10)
