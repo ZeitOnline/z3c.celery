@@ -135,7 +135,9 @@ Example::
 
 .. caution::
 
-    All tasks to be run in end to end tests have to shared tasks. Example::
+    All tasks to be run in end to end tests have to shared tasks. This is
+    necessary because the end to end tests have to use a different Celery use
+    instance than ``z3c.celery.CELERY``. Example::
 
         @celery.shared_task
         def my_task():
