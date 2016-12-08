@@ -11,6 +11,8 @@ class EndToEndLayer(plone.testing.Layer):
 
     * `celery_config`: dict of config options for the celery app
     * `celery_parameters`: dict of parameters used to instantiate Celery
+    * `celery_worker_parameters`: dict of parameters used to instantiate
+       celery workers
     * `celery_includes`: list of dotted names to load the tasks in the worker
     """
 
@@ -30,7 +32,8 @@ class EndToEndLayer(plone.testing.Layer):
                 request_mock,
                 celery_app,
                 self['celery_includes'],
-                celery_worker_pool='prefork'))
+                celery_worker_pool='prefork',
+                celery_worker_parameters=self['celery_worker_parameters']))
         next(self['celery_worker_fixture'])
 
     def tearDown(self):

@@ -89,6 +89,9 @@ Create a layer which provides the following resources:
 
 * ``celery_parameters``: dict of parameters used to instantiate Celery
 
+* ``celery_worker_parameters``: dict of parameters used to instantiate celery
+  workers
+
 * ``celery_includes``: list of dotted names to load the tasks in the worker
 
 Example::
@@ -101,12 +104,14 @@ Example::
                 'ZOPE_CONF': '/path/to/my/test-zope.conf'}
             self['celery_parameters'] = (
                 z3c.celery.conftest.celery_parameters())
+            self['celery_worker_parameters'] = {'queues': ('celery',)}
             self['celery_includes'] = ['my.module.tasks']
 
         def tearDown(self):
             del self['celery_config']
             del self['celery_includes']
             del self['celery_parameters']
+            del self['celery_worker_parameters']
 
 Create a layer which brings the settings layer and the :class:`EndToEndLayer`
 together, example::
