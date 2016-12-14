@@ -1,12 +1,11 @@
+from __future__ import absolute_import
 from .shared_tasks import get_principal_title_task
 from celery import shared_task
 from z3c.celery.session import celery_session
-from zope.principalregistry.principalregistry import principalRegistry
 import ZODB.POSException
 import datetime
 import logging
 import mock
-import plone.testing.zca
 import pytest
 import tempfile
 import transaction
@@ -245,51 +244,6 @@ def test_celery__TransactionAwareTask____call____4(
     job = get_task_id.apply_async(task_id='my-nice-task-id')
     transaction.commit()
     assert 'my-nice-task-id' == job.get()
-
-
-def test_celery__TransactionAwareTask__run_in_worker__1__cov(
-        interaction, eager_celery_app):
-    """It raises a ValueError if there is no `ZOPE_CONF` in the configuration.
-
-    As it is hard to collect coverage for sub-processes we use this test for
-    coverage only.
-    """
-    eager_celery_app.conf['ZOPE_CONF'] = None
-
-    @z3c.celery.task
-    def unbound_task(context=None, datetime=None):
-        """Task which has not yet been bound.
-
-        This allows to change the configuration of it easily.
-        """
-
-    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
-    with mock.patch(configure_zope):
-
-        with pytest.raises(ValueError) as err:
-            unbound_task(_run_asynchronously_=True)
-        assert (
-            'Celery setting ZOPE_CONF not set, check celery worker config.' ==
-            str(err.value))
-
-
-def test_celery__TransactionAwareTask__configure_zope__1__cov(
-        eager_celery_app):
-    """It loads the ZCML file defined in `ZOPE_CONF`."""
-    # There is no example.user defined by default:
-    with pytest.raises(zope.authentication.interfaces.PrincipalLookupError):
-        principalRegistry.getPrincipal('example.user')
-
-    plone.testing.zca.pushGlobalRegistry()
-
-    # It gets created in the ZCML of `ZOPE_CONF`.
-    try:
-        eager_task(_run_asynchronously_=True, _principal_id_='example.user')
-        assert ('Ben Utzer' ==
-                principalRegistry.getPrincipal('example.user').title)
-    finally:
-        plone.testing.zca.popGlobalRegistry()
-        principalRegistry._clear()
 
 
 LOGGING_TEMPLATE = """

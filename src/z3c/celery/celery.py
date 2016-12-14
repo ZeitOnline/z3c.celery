@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from .loader import ZopeLoader
 from .session import celery_session
 import ZODB.POSException
 import celery
@@ -14,6 +15,7 @@ import random
 import transaction
 import transaction.interfaces
 import zope.app.wsgi
+import zope.app.publication.zopepublication
 import zope.authentication.interfaces
 import zope.component
 import zope.component.hooks
@@ -63,10 +65,6 @@ class TransactionAwareTask(celery.Task):
         return result
 
     def run_in_worker(self, principal_id, args, kw):
-        configfile = self.app.conf.get('ZOPE_CONF')
-        if not configfile:
-            raise ValueError('Celery setting ZOPE_CONF not set, '
-                             'check celery worker config.')
 
         logging_ini = self.app.conf.get('LOGGING_INI')
         if logging_ini:
@@ -74,13 +72,14 @@ class TransactionAwareTask(celery.Task):
 
         old_site = zope.component.hooks.getSite()
 
-        db = self.configure_zope(configfile)
+        connection = self.configure_zope()
         self.transaction_begin(principal_id)
         try:
             result = super(TransactionAwareTask, self).__call__(
                 *args, **kw)
         except Exception:
             self.transaction_abort()
+            connection.close()
             raise
         finally:
             zope.component.hooks.setSite(old_site)
@@ -92,7 +91,7 @@ class TransactionAwareTask(celery.Task):
             self.retry(max_retries=3,
                        countdown=random.randint(1, 2 ** self.request.retries))
         finally:
-            db.close()
+            connection.close()
         return result
 
     def transaction_begin(self, principal_id):
@@ -115,11 +114,13 @@ class TransactionAwareTask(celery.Task):
             zope.authentication.interfaces.IAuthentication)
         return auth.getPrincipal(principal_id)
 
-    def configure_zope(self, configfile):
-        db = zope.app.wsgi.config(configfile)
-        root_folder = db.open().root()['Application']
+    def configure_zope(self):
+        db = self.app.conf.get('ZODB')
+        connection = db.open()
+        root_folder = connection.root()[
+            zope.app.publication.zopepublication.ZopePublication.root_name]
         zope.component.hooks.setSite(root_folder)
-        return db
+        return connection
 
     def setup_logging(self, paste_ini):
         """Makes the loglevel finely configurable via a config file."""
@@ -216,6 +217,6 @@ def get_config_source():
 
 
 CELERY = celery.Celery(
-    __name__, task_cls=TransactionAwareTask,
+    __name__, task_cls=TransactionAwareTask, loader=ZopeLoader,
     strict_typing=False, config_source=get_config_source())
 CELERY.set_default()
