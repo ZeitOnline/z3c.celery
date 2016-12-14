@@ -15,6 +15,7 @@ setup(
         'transaction',
         'ZODB',
         'zope.app.appsetup',
+        'zope.app.publication',
         'zope.app.wsgi',
         'zope.authentication',
         'zope.component',

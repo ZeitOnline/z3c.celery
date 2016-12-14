@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from .loader import ZopeLoader
 from .session import celery_session
 import ZODB.POSException
 import celery
@@ -14,6 +15,7 @@ import random
 import transaction
 import transaction.interfaces
 import zope.app.wsgi
+import zope.app.publication.zopepublication
 import zope.authentication.interfaces
 import zope.component
 import zope.component.hooks
@@ -70,13 +72,14 @@ class TransactionAwareTask(celery.Task):
 
         old_site = zope.component.hooks.getSite()
 
-        db = self.configure_zope()
+        connection = self.configure_zope()
         self.transaction_begin(principal_id)
         try:
             result = super(TransactionAwareTask, self).__call__(
                 *args, **kw)
         except Exception:
             self.transaction_abort()
+            connection.close()
             raise
         finally:
             zope.component.hooks.setSite(old_site)
@@ -88,7 +91,7 @@ class TransactionAwareTask(celery.Task):
             self.retry(max_retries=3,
                        countdown=random.randint(1, 2 ** self.request.retries))
         finally:
-            db.close()
+            connection.close()
         return result
 
     def transaction_begin(self, principal_id):
@@ -113,9 +116,11 @@ class TransactionAwareTask(celery.Task):
 
     def configure_zope(self):
         db = self.app.conf.get('ZODB')
-        root_folder = self.app.conf.get('ZOPE_APP')
+        connection = db.open()
+        root_folder = connection.root()[
+            zope.app.publication.zopepublication.ZopePublication.root_name]
         zope.component.hooks.setSite(root_folder)
-        return db
+        return connection
 
     def setup_logging(self, paste_ini):
         """Makes the loglevel finely configurable via a config file."""
@@ -194,40 +199,6 @@ class TransactionAwareTask(celery.Task):
         else:
             principal_id = interaction.participations[0].principal.id
         return principal_id
-
-
-class ZopeLoader(celery.loaders.app.AppLoader):
-    """Sets up the Zope environment in the Worker processes.
-
-    (Code inspired by gocept.runner.runner.init)
-    """
-
-    def on_worker_process_init(self):
-        conf = self.app.conf
-        configfile = conf.get('ZOPE_CONF')
-        if not configfile:
-            raise ValueError(
-                'Celery setting ZOPE_CONF not set, '
-                'check celery worker config.')
-
-        db = zope.app.wsgi.config(configfile)
-        conf['ZOPE_APP'] = db.open().root()['Application']
-        conf['ZODB'] = db
-
-    def on_worker_shutdown(self):
-        if 'ZODB' in self.app.conf:
-            self.app.conf['ZODB'].close()
-
-
-class ZopeBootstep(celery.bootsteps.StartStopStep):
-    """Manages the setup of the Zope environment in the Worker main process.
-    """
-
-    def start(self, parent):
-        parent.app.loader.on_worker_process_init()
-
-    def stop(self, parent):
-        parent.app.loader.on_worker_shutdown()
 
 
 def get_config_source():
