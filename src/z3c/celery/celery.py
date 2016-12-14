@@ -7,6 +7,7 @@ import celery.bootsteps
 import celery.loaders.app
 import celery.signals
 import celery.utils
+import contextlib
 import json
 import logging
 import logging.config
@@ -70,28 +71,21 @@ class TransactionAwareTask(celery.Task):
         if logging_ini:
             self.setup_logging(logging_ini)
 
-        old_site = zope.component.hooks.getSite()
-
-        connection = self.configure_zope()
-        self.transaction_begin(principal_id)
-        try:
-            result = super(TransactionAwareTask, self).__call__(
-                *args, **kw)
-        except Exception:
-            self.transaction_abort()
-            connection.close()
-            raise
-        finally:
-            zope.component.hooks.setSite(old_site)
-        try:
-            self.transaction_commit()
-        except ZODB.POSException.ConflictError:
-            log.warning('Conflict while publishing', exc_info=True)
-            self.transaction_abort()
-            self.retry(max_retries=3,
-                       countdown=random.randint(1, 2 ** self.request.retries))
-        finally:
-            connection.close()
+        with self.configure_zope():
+            self.transaction_begin(principal_id)
+            try:
+                result = super(TransactionAwareTask, self).__call__(
+                    *args, **kw)
+            except Exception:
+                self.transaction_abort()
+                raise
+            try:
+                self.transaction_commit()
+            except ZODB.POSException.ConflictError:
+                log.warning('Conflict while publishing', exc_info=True)
+                self.transaction_abort()
+                countdown = random.randint(1, 2 ** self.request.retries)
+                self.retry(max_retries=3, countdown=countdown)
         return result
 
     def transaction_begin(self, principal_id):
@@ -114,13 +108,19 @@ class TransactionAwareTask(celery.Task):
             zope.authentication.interfaces.IAuthentication)
         return auth.getPrincipal(principal_id)
 
+    @contextlib.contextmanager
     def configure_zope(self):
+        old_site = zope.component.hooks.getSite()
         db = self.app.conf.get('ZODB')
         connection = db.open()
         root_folder = connection.root()[
             zope.app.publication.zopepublication.ZopePublication.root_name]
         zope.component.hooks.setSite(root_folder)
-        return connection
+        try:
+            yield
+        finally:
+            connection.close()
+            zope.component.hooks.setSite(old_site)
 
     def setup_logging(self, paste_ini):
         """Makes the loglevel finely configurable via a config file."""
