@@ -55,7 +55,7 @@ def interaction(automatic_transaction_begin):
         u'zope.user',
         groups=['zope.Authenticated'],
         description=u'test@example.com')
-    z3c.celery.testing.login_principal(principal)
+    z3c.celery.celery.login_principal(principal)
     yield principal
     zope.security.management.endInteraction()
 

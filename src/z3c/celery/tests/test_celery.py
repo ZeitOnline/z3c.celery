@@ -10,6 +10,7 @@ import pytest
 import tempfile
 import transaction
 import z3c.celery
+import z3c.celery.celery
 import z3c.celery.testing
 import zope.authentication.interfaces
 import zope.security.management
@@ -65,12 +66,12 @@ def test_celery__TransactionAwareTask__delay__5(celery_session_worker, zcml):
     auth = zope.component.getUtility(
         zope.authentication.interfaces.IAuthentication)
     principal = auth.getPrincipal('example.user')
-    z3c.celery.testing.login_principal(principal)
+    z3c.celery.celery.login_principal(principal)
     result1 = get_principal_title_task.delay()
 
     zope.security.management.endInteraction()
     principal = auth.getPrincipal('zope.user')
-    z3c.celery.testing.login_principal(principal)
+    z3c.celery.celery.login_principal(principal)
     result2 = get_principal_title_task.delay()
 
     transaction.commit()
@@ -209,7 +210,7 @@ def test_celery__TransactionAwareTask____call____3(
     auth = zope.component.getUtility(
         zope.authentication.interfaces.IAuthentication)
     principal = auth.getPrincipal('example.user')
-    z3c.celery.testing.login_principal(principal)
+    z3c.celery.celery.login_principal(principal)
     result = get_principal_title_task.delay()
     transaction.commit()
     assert 'Ben Utzer' == result.get()

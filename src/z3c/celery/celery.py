@@ -28,6 +28,13 @@ import zope.security.management
 log = logging.getLogger(__name__)
 
 
+def login_principal(principal):
+    """Start an interaction with `principal`."""
+    request = zope.publisher.browser.TestRequest()
+    request.setPrincipal(principal)
+    zope.security.management.newInteraction(request)
+
+
 class TransactionAwareTask(celery.Task):
     """Wrap every Task execution in a transaction begin/commit/abort.
 
@@ -91,9 +98,7 @@ class TransactionAwareTask(celery.Task):
     def transaction_begin(self, principal_id):
         if principal_id:
             transaction.begin()
-            request = zope.publisher.browser.TestRequest()
-            request.setPrincipal(self.get_principal(principal_id))
-            zope.security.management.newInteraction(request)
+            login_principal(self.get_principal(principal_id))
 
     def transaction_abort(self):
         transaction.abort()

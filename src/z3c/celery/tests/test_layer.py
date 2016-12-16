@@ -4,6 +4,7 @@ import plone.testing
 import plone.testing.zca
 import transaction
 import unittest
+import z3c.celery.celery
 import z3c.celery.conftest
 import z3c.celery.testing
 import zope.authentication.interfaces
@@ -57,7 +58,7 @@ class EndToEndLayerTests(unittest.TestCase):
         auth = zope.component.getUtility(
             zope.authentication.interfaces.IAuthentication)
         principal = auth.getPrincipal('example.user')
-        z3c.celery.testing.login_principal(principal)
+        z3c.celery.celery.login_principal(principal)
         result = get_principal_title_task.apply_async(queue='hiprio')
 
         transaction.commit()
