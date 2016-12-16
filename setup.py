@@ -10,7 +10,7 @@ setup(
     version='0.1.dev0',
 
     install_requires=[
-        'celery >= 4.0.1',
+        'celery >= 4.0.2',
         'setuptools',
         'transaction',
         'ZODB',
