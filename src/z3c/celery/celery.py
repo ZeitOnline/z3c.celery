@@ -128,7 +128,7 @@ class TransactionAwareTask(celery.Task):
             zope.component.hooks.setSite(old_site)
 
     def setup_logging(self, paste_ini):
-        """Makes the loglevel finely configurable via a config file."""
+        """Make the loglevel finely configurable via a config file."""
         config_file = os.path.abspath(paste_ini)
         logging.config.fileConfig(config_file, dict(
             __file__=config_file,

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from .shared_tasks import get_principal_title_task
 from celery import shared_task
 from z3c.celery.session import celery_session
@@ -276,7 +277,6 @@ format = task_id: %(task_id)s name: %(task_name)s %(message)s
 def test_celery__TransactionAwareTask__setup_logging__1__cov(
         interaction, eager_celery_app, zcml):
     """It loads the ZCML file defined in `ZOPE_CONF`."""
-
     @z3c.celery.task
     def simple_log():
         """Just log something."""
