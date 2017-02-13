@@ -17,8 +17,8 @@ import random
 import time
 import transaction
 import transaction.interfaces
-import zope.app.wsgi
 import zope.app.publication.zopepublication
+import zope.app.wsgi
 import zope.authentication.interfaces
 import zope.component
 import zope.component.hooks
