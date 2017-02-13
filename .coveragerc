@@ -4,7 +4,6 @@ source = z3c.celery
 
 [report]
 precision = 2
-omit = */test_*_skipped.py
 
 [html]
 directory = coverage-report

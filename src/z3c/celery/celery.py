@@ -4,6 +4,7 @@ from .session import celery_session
 import ZODB.POSException
 import celery
 import celery.bootsteps
+import celery.exceptions
 import celery.loaders.app
 import celery.signals
 import celery.utils
@@ -13,6 +14,7 @@ import logging
 import logging.config
 import os.path
 import random
+import time
 import transaction
 import transaction.interfaces
 import zope.app.wsgi
@@ -67,17 +69,20 @@ class TransactionAwareTask(celery.Task):
             self.task_id = task_id
 
         if running_asynchronously:
+            logging_ini = self.app.conf.get('LOGGING_INI')
+            if logging_ini:
+                self.setup_logging(logging_ini)
             result = self.run_in_worker(principal_id, args, kw)
         else:
             result = super(TransactionAwareTask, self).__call__(*args, **kw)
         return result
 
-    def run_in_worker(self, principal_id, args, kw):
+    def run_in_worker(self, principal_id, args, kw, retries=0):
+        if retries > self.max_retries:
+            raise celery.exceptions.MaxRetriesExceededError(
+                principal_id, args, kw)
 
-        logging_ini = self.app.conf.get('LOGGING_INI')
-        if logging_ini:
-            self.setup_logging(logging_ini)
-
+        retry = False
         with self.configure_zope():
             self.transaction_begin(principal_id)
             try:
@@ -91,8 +96,14 @@ class TransactionAwareTask(celery.Task):
             except ZODB.POSException.ConflictError:
                 log.warning('Conflict while publishing', exc_info=True)
                 self.transaction_abort()
-                countdown = random.randint(1, 2 ** self.request.retries)
-                self.retry(max_retries=3, countdown=countdown)
+                retry = True
+
+        if retry:
+            countdown = random.randint(1, 2 ** retries)
+            log.warning('Retry in {} seconds.'.format(countdown))
+            time.sleep(countdown)
+            result = self.run_in_worker(
+                principal_id, args, kw, retries=retries + 1)
         return result
 
     def transaction_begin(self, principal_id):
