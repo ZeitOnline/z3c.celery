@@ -147,3 +147,12 @@ Example::
         @celery.shared_task
         def my_task():
             do_stuff()
+
+
+Implementation notes
+--------------------
+
+In case of a ``ZODB.POSException.ConflictError`` the worker process will wait
+and restart the operation again. This is done with active wait
+(``time.sleep()``) and not via the ``self.retry()`` mechanism of celery, as we
+were not able to figure out to get it flying.

@@ -4,6 +4,7 @@ from .shared_tasks import get_principal_title_task
 from celery import shared_task
 from z3c.celery.session import celery_session
 import ZODB.POSException
+import celery.exceptions
 import datetime
 import logging
 import mock
@@ -180,29 +181,69 @@ def test_celery__TransactionAwareTask____call____1__cov(
     assert abort.called
 
 
+@shared_task(max_retries=1)
+def conflict_task(bind=True, context=None, datetime=None):
+    """Dummy task which injects a DataManager that votes a ConflictError."""
+    transaction.get().join(VoteExceptionDataManager())
+
+
+class NoopDatamanager(object):
+    """Datamanager which does nothing."""
+
+    def abort(self, trans):
+        pass
+
+    def commit(self, trans):
+        pass
+
+    def tpc_begin(self, trans):
+        pass
+
+    def tpc_abort(self, trans):
+        pass
+
+
+class VoteExceptionDataManager(NoopDatamanager):
+    """DataManager which raises an exception in tpc_vote."""
+
+    def tpc_vote(self, trans):
+        raise ZODB.POSException.ConflictError()
+
+    def sortKey(self):
+        # Make sure we are running after the in thread execution of the task so
+        # that we can throw an Error as last part of vote:
+        return '~~sort-me-last'
+
+
+def test_celery__TransactionAwareTask____call____2(
+        celery_session_worker, interaction):
+    """It aborts the transaction and retries in case of an ConflictError."""
+    result = conflict_task.delay()
+    transaction.commit()
+    with pytest.raises(Exception) as err:
+        result.get()
+    assert 'MaxRetriesExceededError' == err.value.__class__.__name__
+
+
 def test_celery__TransactionAwareTask____call____2__cov(
         interaction, eager_celery_app):
-    """It aborts the transaction and retries in case of an ConflictError.
+    """It aborts the transaction and retries in case of a ConflictError.
 
     As it is hard to collect coverage for sub-processes we use this test for
     coverage only.
     """
-    task_call = 'celery.Task.__call__'
-    retry = 'celery.Task.retry'
     configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
-    commit = 'z3c.celery.celery.TransactionAwareTask.transaction_commit'
     with mock.patch(configure_zope), \
-            mock.patch(task_call) as task_call, \
-            mock.patch(commit, side_effect=ZODB.POSException.ConflictError),\
-            mock.patch('transaction.abort') as abort, \
-            mock.patch(retry) as retry:
+            mock.patch('transaction.abort',
+                       side_effect=transaction.abort) as abort, \
+            mock.patch('time.sleep') as sleep:
 
         zope.security.management.endInteraction()
-        eager_task(_run_asynchronously_=True)
+        with pytest.raises(celery.exceptions.MaxRetriesExceededError):
+            conflict_task(_run_asynchronously_=True)
 
-    assert task_call.called
     assert abort.called
-    assert retry.called
+    assert 2 == sleep.call_count  # We have max_retries=1 for this task
 
 
 def test_celery__TransactionAwareTask____call____3(
