@@ -366,7 +366,7 @@ def test_celery__TransactionAwareTask__run_in_worker__1__cov(
 
 def test_celery__TransactionAwareTask__setup_logging__1__cov(
         interaction, eager_celery_app, zcml):
-    """It loads the ZCML file defined in `ZOPE_CONF`."""
+    """It loads the ini file defined in celeryconf.py."""
     @z3c.celery.task
     def simple_log():
         """Just log something."""
