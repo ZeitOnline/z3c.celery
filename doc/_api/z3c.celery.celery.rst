@@ -27,4 +27,10 @@ z3c.celery.celery
 
    
    
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      HandleAfterAbort
+   
    
