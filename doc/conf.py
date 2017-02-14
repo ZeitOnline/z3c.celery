@@ -35,7 +35,7 @@ html_sidebars = {
 # each run. The _autosummary_output variable tells the relative path to
 # the directory that autosummary uses to put its generated files and which
 # we, therefore, need to remove. It must be the same that the autosummary
-# directive in api.txt points to.
+# directive in api.rst points to.
 
 autosummary_generate = ['api.rst']
 _autosummary_output = './_api/'
