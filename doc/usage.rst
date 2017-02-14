@@ -40,6 +40,15 @@ To successful configure Celery in Zope place the ``celeryconfig.py`` in the
 ``PYTHONPATH``. The configuration will be taken from there.
 
 
+Execute code after ``transaction.abort()``
+------------------------------------------
+
+If running a task fails the transaction is aborted. In case you need to write
+something to the ZODB raise :class:`z3c.celery.celery.HandleAfterAbort` in your
+task. This exception takes a callable and its arguments. It is run in a
+separate transaction after ``transaction.abort()`` for the task was called.
+
+
 Accessing the ``task_id`` in the task
 -------------------------------------
 

@@ -26,17 +26,12 @@ import zope.exceptions.log
 import zope.publisher.browser
 import zope.security.management
 
-import q
-
 
 log = logging.getLogger(__name__)
 
 
 class HandleAfterAbort(RuntimeError):
-    """The callback of this Exception is executed after
-
-    ``transaction.abort()``.
-    """
+    """Exception whose callback is executed after ``transaction.abort()``."""
 
     def __init__(self, callback, *args, **kwargs):
         self.callback = callback
@@ -44,7 +39,6 @@ class HandleAfterAbort(RuntimeError):
         self.c_kwargs = kwargs
 
     def __call__(self):
-        """Run the callback."""
         self.callback(*self.c_args, **self.c_kwargs)
 
 
@@ -96,7 +90,6 @@ class TransactionAwareTask(celery.Task):
         return result
 
     def run_in_worker(self, principal_id, args, kw, retries=0):
-        q('RUN IN WORKER')
         if retries > self.max_retries:
             raise celery.exceptions.MaxRetriesExceededError(
                 principal_id, args, kw)
@@ -138,7 +131,6 @@ class TransactionAwareTask(celery.Task):
 
     def transaction_abort(self):
         transaction.abort()
-        q('transaction abort')
         zope.security.management.endInteraction()
 
     def transaction_commit(self):
