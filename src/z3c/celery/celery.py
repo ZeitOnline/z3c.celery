@@ -30,6 +30,18 @@ import zope.security.management
 log = logging.getLogger(__name__)
 
 
+class HandleAfterAbort(RuntimeError):
+    """Exception whose callback is executed after ``transaction.abort()``."""
+
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.c_args = args
+        self.c_kwargs = kwargs
+
+    def __call__(self):
+        self.callback(*self.c_args, **self.c_kwargs)
+
+
 def login_principal(principal):
     """Start an interaction with `principal`."""
     request = zope.publisher.browser.TestRequest()
@@ -88,6 +100,12 @@ class TransactionAwareTask(celery.Task):
             try:
                 result = super(TransactionAwareTask, self).__call__(
                     *args, **kw)
+            except HandleAfterAbort as handle:
+                self.transaction_abort()
+                self.transaction_begin(principal_id)
+                handle()
+                self.transaction_commit()
+                raise
             except Exception:
                 self.transaction_abort()
                 raise
