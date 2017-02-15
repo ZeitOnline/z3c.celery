@@ -34,13 +34,24 @@ class HandleAfterAbort(RuntimeError):
     """Exception whose callback is executed after ``transaction.abort()``."""
 
     def __init__(self, callback, *args, **kwargs):
-        super(HandleAfterAbort, self).__init__(kwargs.pop('message', u''))
+        self.message = kwargs.pop('message', u'')
+        if isinstance(self.message, bytes):
+            self.message = self.message.decode('utf-8')
+
+        super(HandleAfterAbort, self).__init__(self.message)
+
         self.callback = callback
         self.c_args = args
         self.c_kwargs = kwargs
 
     def __call__(self):
         self.callback(*self.c_args, **self.c_kwargs)
+
+    def __str__(self):
+        return self.message.encode('utf-8')
+
+    def __unicode__(self):
+        return self.message
 
 
 def login_principal(principal):
