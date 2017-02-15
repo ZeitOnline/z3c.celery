@@ -37,4 +37,5 @@ def open_zodb_copy(zodb_path):
         yield connection.root()['Application']
     finally:
         connection.close()
+        zodbDB.close()
         os.unlink(new_zodb_path)
