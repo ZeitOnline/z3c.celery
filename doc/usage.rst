@@ -48,6 +48,10 @@ something to the ZODB raise :class:`z3c.celery.celery.HandleAfterAbort` in your
 task. This exception takes a callable and its arguments. It is run in a
 separate transaction after ``transaction.abort()`` for the task was called.
 
+It is possible to pass a keyword argument ``message`` into
+:class:`~z3c.celery.celery.HandleAfterAbort`. This message will be serialized
+and returned to celery in the task result. It is not passed to the callback.
+
 
 Accessing the ``task_id`` in the task
 -------------------------------------
