@@ -292,6 +292,53 @@ def test_celery__TransactionAwareTask____call____4(
     assert 'my-nice-task-id' == job.get()
 
 
+@shared_task
+def except_with_handler():
+    """Raise an exception which is handled after abort."""
+    site = zope.component.hooks.getSite()
+    site['foo'] = 'bar'
+
+    def handler(arg1, arg2, kw1=1, kw2=2):
+        interaction = zope.security.management.getInteraction()
+        site['data'] = (arg1, arg2, kw1, kw2,
+                        interaction.participations[0].principal.title)
+
+    raise HandleAfterAbort(handler, 'a1', 'a2', kw2=4)
+
+
+def test_celery__TransactionAwareTask__run_in_worker__1(
+        celery_session_worker, storage_file, interaction):
+    """It handles specific exceptions in a new transaction after abort."""
+    job = except_with_handler.delay()
+    transaction.commit()
+    with pytest.raises(Exception):
+        job.get()
+
+    with open_zodb_copy(storage_file) as app:
+        assert [('data', ('a1', 'a2', 1, 4, u'User'))] == list(app.items())
+
+
+def test_celery__TransactionAwareTask__run_in_worker__1__cov(
+        interaction, eager_celery_app, zcml):
+    """It handles specific exceptions in a new transaction after abort.
+
+    As it is hard to collect coverage for sub-processes we use this test for
+    coverage only.
+    """
+    data = {}
+    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
+    with mock.patch(configure_zope),\
+            mock.patch('zope.component.hooks.getSite', return_value=data):
+        zope.security.management.endInteraction()
+        with pytest.raises(HandleAfterAbort):
+            except_with_handler(
+                _run_asynchronously_=True, _principal_id_='example.user')
+
+    # transaction.abort() does not remove items from a dict, so 'foo': 'bar'
+    # also shows up here:
+    assert {'data': ('a1', 'a2', 1, 4, u'Ben Utzer'), 'foo': 'bar'} == data
+
+
 LOGGING_TEMPLATE = """
 [loggers]
 keys = root, root
@@ -316,53 +363,6 @@ args = ('{filename}',)
 class = z3c.celery.logging.TaskFormatter
 format = task_id: %(task_id)s name: %(task_name)s %(message)s
 """
-
-
-@shared_task
-def except_with_hander():
-    """Raise an exception which is handled after abort."""
-    site = zope.component.hooks.getSite()
-    site['foo'] = 'bar'
-
-    def handler(arg1, arg2, kw1=1, kw2=2):
-        interaction = zope.security.management.getInteraction()
-        site['data'] = (arg1, arg2, kw1, kw2,
-                        interaction.participations[0].principal.title)
-
-    raise HandleAfterAbort(handler, 'a1', 'a2', kw2=4)
-
-
-def test_celery__TransactionAwareTask__run_in_worker__1(
-        celery_session_worker, storage_file, interaction):
-    """It handles specific exceptions in a new transaction after abort."""
-    job = except_with_hander.delay()
-    transaction.commit()
-    with pytest.raises(Exception):
-        job.get()
-
-    with open_zodb_copy(storage_file) as app:
-        assert [('data', ('a1', 'a2', 1, 4, u'User'))] == list(app.items())
-
-
-def test_celery__TransactionAwareTask__run_in_worker__1__cov(
-        interaction, eager_celery_app, zcml):
-    """It handles specific exceptions in a new transaction after abort.
-
-    As it is hard to collect coverage for sub-processes we use this test for
-    coverage only.
-    """
-    data = {}
-    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
-    with mock.patch(configure_zope),\
-            mock.patch('zope.component.hooks.getSite', return_value=data):
-        zope.security.management.endInteraction()
-        with pytest.raises(HandleAfterAbort):
-            except_with_hander(
-                _run_asynchronously_=True, _principal_id_='example.user')
-
-    # transaction.abort() does not remove items from a dict, so 'foo': 'bar'
-    # also shows up here:
-    assert {'data': ('a1', 'a2', 1, 4, u'Ben Utzer'), 'foo': 'bar'} == data
 
 
 def test_celery__TransactionAwareTask__setup_logging__1__cov(
