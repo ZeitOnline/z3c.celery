@@ -98,8 +98,15 @@ class TransactionAwareTask(celery.Task):
                 self.setup_logging(logging_ini)
             result = self.run_in_worker(principal_id, args, kw)
         else:
-            result = super(TransactionAwareTask, self).__call__(*args, **kw)
+            result = self.run_in_same_process(args, kw)
         return result
+
+    def run_in_same_process(self, args, kw):
+        try:
+            return super(TransactionAwareTask, self).__call__(*args, **kw)
+        except HandleAfterAbort as handle:
+            handle()
+            raise
 
     def run_in_worker(self, principal_id, args, kw, retries=0):
         if retries > self.max_retries:
