@@ -136,7 +136,7 @@ class TransactionAwareTask(celery.Task):
                 retry = True
 
         if retry:
-            countdown = random.randint(1, 2 ** retries)
+            countdown = random.uniform(0, 2 ** retries)
             log.warning('Retry in {} seconds.'.format(countdown))
             time.sleep(countdown)
             result = self.run_in_worker(
