@@ -34,6 +34,7 @@ class HandleAfterAbort(RuntimeError):
     """Exception whose callback is executed after ``transaction.abort()``."""
 
     def __init__(self, callback, *args, **kwargs):
+        super(HandleAfterAbort, self).__init__(kwargs.pop('message', u''))
         self.callback = callback
         self.c_args = args
         self.c_kwargs = kwargs

@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import
 
 from .shared_tasks import get_principal_title_task
@@ -391,3 +392,23 @@ def test_celery__TransactionAwareTask__setup_logging__1__cov(
 
         assert ('task_id: <unknown> name: z3c.celery.tests.test_celery.'
                 'simple_log Hello Log!\n' == log_result)
+
+
+def test_celery__HandleAfterAbort__1():
+    """It returns the message in the exception string which was passed in."""
+    err = HandleAfterAbort(lambda: None, message=u'test-messäge')
+    err()
+    assert u'test-messäge' == unicode(err)
+
+
+def test_celery__HandleAfterAbort__2():
+    """It does not pass the message as argument to the callback."""
+    data = {}
+
+    def save_args(*args, **kwargs):
+        data['args'] = args
+        data['kwargs'] = kwargs
+
+    err = HandleAfterAbort(save_args, 2, 3, message=u'test-messäge', kw1='23')
+    err()
+    assert {'args': (2, 3), 'kwargs': {'kw1': '23'}} == data
