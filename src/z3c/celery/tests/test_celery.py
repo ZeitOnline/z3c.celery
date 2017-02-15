@@ -306,6 +306,16 @@ def except_with_handler():
     raise HandleAfterAbort(handler, 'a1', 'a2', kw2=4)
 
 
+def test_celery__TransactionAwareTask____call__5(
+        interaction):
+    """It handles specific exceptions when running synchronously."""
+    data = {}
+    with mock.patch('zope.component.hooks.getSite', return_value=data):
+        with pytest.raises(HandleAfterAbort):
+            except_with_handler()
+    assert {'data': ('a1', 'a2', 1, 4, u'zope.user'), 'foo': 'bar'} == data
+
+
 def test_celery__TransactionAwareTask__run_in_worker__1(
         celery_session_worker, storage_file, interaction):
     """It handles specific exceptions in a new transaction after abort."""
