@@ -395,10 +395,19 @@ def test_celery__TransactionAwareTask__setup_logging__1__cov(
 
 
 def test_celery__HandleAfterAbort__1():
-    """It returns the message in the exception string which was passed in."""
+    """It returns the message in the exception unicode which was passed in."""
     err = HandleAfterAbort(lambda: None, message=u'test-messäge')
     err()
     assert u'test-messäge' == unicode(err)
+    assert 'test-messäge' == str(err)
+
+
+def test_celery__HandleAfterAbort__1_5():
+    """It returns the message in the exception string which was passed in."""
+    err = HandleAfterAbort(lambda: None, message='test-messäge')
+    err()
+    assert u'test-messäge' == unicode(err)
+    assert 'test-messäge' == str(err)
 
 
 def test_celery__HandleAfterAbort__2():
