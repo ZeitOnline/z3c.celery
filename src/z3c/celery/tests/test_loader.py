@@ -2,10 +2,79 @@ from __future__ import absolute_import
 from ..loader import ZopeLoader
 from .shared_tasks import get_principal_title_task
 from zope.principalregistry.principalregistry import principalRegistry
+import celery.signals
 import contextlib
+import logging
+import mock
 import plone.testing.zca
 import pytest
+import tempfile
+import z3c.celery
 import zope.app.appsetup.appsetup
+import zope.security.management
+
+
+LOGGING_TEMPLATE = """
+[loggers]
+keys = root, root
+
+[handlers]
+keys = logfile
+
+[formatters]
+keys = taskformatter
+
+[logger_root]
+level = DEBUG
+handlers = logfile
+qualname = root
+
+[handler_logfile]
+class = FileHandler
+formatter = taskformatter
+args = ('{filename}',)
+
+[formatter_taskformatter]
+class = z3c.celery.logging.TaskFormatter
+format = task_id: %(task_id)s name: %(task_name)s %(message)s
+"""
+
+
+def test_loader__ZopeLoader__on_worker_init__1__cov(
+        interaction, eager_celery_app, zcml):
+    """It connects a signal for logging setup if LOGGING_INI is present in
+
+    the configuration.
+
+    As it is hard to collect coverage for sub-processes we use this test for
+    coverage only.
+    """
+    @z3c.celery.task
+    def simple_log():
+        """Just log something."""
+        log = logging.getLogger(__name__)
+        log.debug('Hello Log!')
+
+    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
+    with tempfile.NamedTemporaryFile(delete=False) as logging_ini, \
+            tempfile.NamedTemporaryFile(delete=False) as logfile:
+        logging_ini.write(LOGGING_TEMPLATE.format(filename=logfile.name))
+        logging_ini.flush()
+        eager_celery_app.conf['LOGGING_INI'] = logging_ini.name
+        loader = ZopeLoader(app=eager_celery_app)
+        loader.on_worker_init()
+        celery.signals.setup_logging.send(sender=None)
+
+        with mock.patch(configure_zope):
+            zope.security.management.endInteraction()
+            simple_log(
+                _run_asynchronously_=True, _principal_id_='example.user')
+
+        logfile.seek(0)
+        log_result = logfile.read()
+
+        assert ('task_id: <unknown> name: z3c.celery.tests.test_loader.'
+                'simple_log Hello Log!\n' == log_result)
 
 
 def test_loader__ZopeLoader__on_worker_process_init__1__cov(
