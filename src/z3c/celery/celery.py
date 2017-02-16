@@ -11,8 +11,6 @@ import celery.utils
 import contextlib
 import json
 import logging
-import logging.config
-import os.path
 import random
 import time
 import transaction
@@ -93,9 +91,6 @@ class TransactionAwareTask(celery.Task):
             self.task_id = task_id
 
         if running_asynchronously:
-            logging_ini = self.app.conf.get('LOGGING_INI')
-            if logging_ini:
-                self.setup_logging(logging_ini)
             result = self.run_in_worker(principal_id, args, kw)
         else:
             result = self.run_in_same_process(args, kw)
@@ -174,13 +169,6 @@ class TransactionAwareTask(celery.Task):
         finally:
             connection.close()
             zope.component.hooks.setSite(old_site)
-
-    def setup_logging(self, paste_ini):
-        """Make the loglevel finely configurable via a config file."""
-        config_file = os.path.abspath(paste_ini)
-        logging.config.fileConfig(config_file, dict(
-            __file__=config_file,
-            here=os.path.dirname(config_file)))
 
     def delay(self, *args, **kw):
         self._assert_json_serializable(*args, **kw)
