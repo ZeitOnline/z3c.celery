@@ -52,6 +52,13 @@ class HandleAfterAbort(RuntimeError):
         return self.message
 
 
+def get_principal(principal_id):
+    """Return the principal to the principal_id."""
+    auth = zope.component.getUtility(
+        zope.authentication.interfaces.IAuthentication)
+    return auth.getPrincipal(principal_id)
+
+
 def login_principal(principal):
     """Start an interaction with `principal`."""
     request = zope.publisher.browser.TestRequest()
@@ -141,7 +148,7 @@ class TransactionAwareTask(celery.Task):
     def transaction_begin(self, principal_id):
         if principal_id:
             transaction.begin()
-            login_principal(self.get_principal(principal_id))
+            login_principal(get_principal(principal_id))
 
     def transaction_abort(self):
         transaction.abort()
@@ -150,11 +157,6 @@ class TransactionAwareTask(celery.Task):
     def transaction_commit(self):
         transaction.commit()
         zope.security.management.endInteraction()
-
-    def get_principal(self, principal_id):
-        auth = zope.component.getUtility(
-            zope.authentication.interfaces.IAuthentication)
-        return auth.getPrincipal(principal_id)
 
     @contextlib.contextmanager
     def configure_zope(self):

@@ -10,6 +10,7 @@ z3c.celery.celery
    .. autosummary::
    
       get_config_source
+      get_principal
       login_principal
    
    
