@@ -8,8 +8,8 @@ author = 'gocept, Zeit Online'
 _year_started = 2016
 _year = datetime.date.today().year
 if _year != _year_started:
-    _year = u'%s-%s'.format(_year_started, _year)
-copyright = u'%s %s' % (_year, author)
+    _year = u'%s-%s' % (_year_started, _year)
+copyright = u' %s %s' % (_year, author)
 source_suffix = '.rst'
 master_doc = 'index'
 

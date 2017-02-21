@@ -1,4 +1,4 @@
-Copyright (c) 2016 by ZEIT ONLINE GmbH and contributors.
+Copyright (c) 2016-2017 by ZEIT ONLINE GmbH and contributors.
 
 All rights reserved.
 

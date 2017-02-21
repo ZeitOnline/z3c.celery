@@ -1,11 +1,24 @@
 Usage
 =====
 
+Integration with Zope
+---------------------
+
+To successfully configure Celery in Zope place the ``celeryconfig.py`` in the
+``PYTHONPATH``. The configuration will be taken from there.
+
+Define your tasks as ``shared_task()`` so they can be used in the tests and
+when running the server.
+
+`z3c.celery` provides its own celery app: ``z3c.celery.CELERY``. It does the
+actual the integration work.
+
+
 Worker setup
 ------------
 
-If you have a python file named ``celeryconfig.py`` in your working directory,
-you can tart the celery worker using the following command:
+Place the ``celeryconfig.py`` in your working directory. Now you can start the
+celery worker using the following command:
 
 .. code-block:: console
 
@@ -17,8 +30,8 @@ This ``celeryconfig.py`` and the referenced ``zope.conf`` should be identical to
 the ones, your Zope is started with.
 
 Additionally you can specify a variable ``LOGGING_INI`` pointing to a logging
-config (an ini file in `configuration file format`_, might be your paste.ini).
-See `Logging`_ for details.
+config (an ini file in `configuration file format`_, which might be your
+paste.ini). See `Logging`_ for details.
 
 Example::
 
@@ -31,13 +44,6 @@ Example::
 
 .. _`celeryconfig` : http://docs.celeryproject.org/en/latest/userguide/configuration.html
 .. _`configuration file format` : https://docs.python.org/2/library/logging.config.html#configuration-file-format
-
-
-Integration with Zope
----------------------
-
-To successful configure Celery in Zope place the ``celeryconfig.py`` in the
-``PYTHONPATH``. The configuration will be taken from there.
 
 
 Execute code after ``transaction.abort()``
@@ -75,7 +81,7 @@ Logging
 which can also be used as a generic formatter as it will omit task specific
 output if there is none. It allows to include task id and task name of the
 current task in the log message if they are available. Include it in your
-paste ini:
+logging configuration:
 
 .. code-block:: ini
 
@@ -154,7 +160,7 @@ Example::
 .. caution::
 
     All tasks to be run in end to end tests have to shared tasks. This is
-    necessary because the end to end tests have to use a different Celery use
+    necessary because the end to end tests have to use a different Celery
     instance than ``z3c.celery.CELERY``. Example::
 
         @celery.shared_task
