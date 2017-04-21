@@ -179,7 +179,7 @@ class TransactionAwareTask(celery.Task):
         kw['_principal_id_'] = self._get_current_principal_id()
         kw['_task_id_'] = task_id
         if self.run_instantly():
-            self.__call__(*args, **kw)
+            return self.apply(args, kw, task_id=task_id)
         elif not kw['_principal_id_']:
             # Tests run a `ping.delay()` task beforehand which we handle here
             # separately:
@@ -203,7 +203,7 @@ class TransactionAwareTask(celery.Task):
         kw['_task_id_'] = task_id
 
         if self.run_instantly():
-            self.__call__(*args, **kw)
+            return self.apply(args, kw, task_id=task_id, **options)
         else:
             kw['_principal_id_'] = self._get_current_principal_id()
             kw['_run_asynchronously_'] = self.run_asynchronously()
