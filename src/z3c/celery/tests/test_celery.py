@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from .shared_tasks import get_principal_title_task
 from celery import shared_task
-from z3c.celery.celery import HandleAfterAbort
+from z3c.celery.celery import HandleAfterAbort, Abort
 from z3c.celery.session import celery_session
 from z3c.celery.testing import open_zodb_copy
 import ZODB.POSException
@@ -345,6 +345,25 @@ def test_celery__TransactionAwareTask__run_in_worker__1__cov(
     # transaction.abort() does not remove items from a dict, so 'foo': 'bar'
     # also shows up here:
     assert {'data': ('a1', 'a2', 1, 4, u'Ben Utzer'), 'foo': 'bar'} == data
+
+
+@shared_task
+def success_but_abort_transaction():
+    site = zope.component.hooks.getSite()
+    site['flub'] = 'will not be written'
+    raise Abort('done')
+
+
+def test_celery__TransactionAwareTask__run_in_worker__2(
+        celery_session_worker, storage_file, interaction):
+    """It handles a specific exceptions to abort the transaction but still
+    count as a successful job."""
+    job = success_but_abort_transaction.delay()
+    transaction.commit()
+    assert 'done' == job.get()
+
+    with open_zodb_copy(storage_file) as app:
+        assert 'flub' not in app
 
 
 def test_celery__HandleAfterAbort__1():

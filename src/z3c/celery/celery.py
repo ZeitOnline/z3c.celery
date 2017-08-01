@@ -12,6 +12,7 @@ import contextlib
 import json
 import logging
 import random
+import sys
 import time
 import transaction
 import transaction.interfaces
@@ -50,6 +51,16 @@ class HandleAfterAbort(RuntimeError):
 
     def __unicode__(self):
         return self.message
+
+
+class Abort(RuntimeError):
+    """Exception to signal successfull task completion, but transaction should
+    be aborted instead of commited.
+    """
+
+    @property
+    def result(self):
+        return self.args[0]
 
 
 def get_principal(principal_id):
@@ -106,6 +117,9 @@ class TransactionAwareTask(celery.Task):
     def run_in_same_process(self, args, kw):
         try:
             return super(TransactionAwareTask, self).__call__(*args, **kw)
+        except Abort as e:
+            self.transaction_abort()
+            return e.result
         except HandleAfterAbort as handle:
             handle()
             raise
@@ -121,6 +135,9 @@ class TransactionAwareTask(celery.Task):
             try:
                 result = super(TransactionAwareTask, self).__call__(
                     *args, **kw)
+            except Abort as e:
+                self.transaction_abort()
+                return e.result
             except HandleAfterAbort as handle:
                 self.transaction_abort()
                 self.transaction_begin(principal_id)
@@ -130,12 +147,13 @@ class TransactionAwareTask(celery.Task):
             except Exception:
                 self.transaction_abort()
                 raise
-            try:
-                self.transaction_commit()
-            except ZODB.POSException.ConflictError:
-                log.warning('Conflict while publishing', exc_info=True)
-                self.transaction_abort()
-                retry = True
+            else:
+                try:
+                    self.transaction_commit()
+                except ZODB.POSException.ConflictError:
+                    log.warning('Conflict while publishing', exc_info=True)
+                    self.transaction_abort()
+                    retry = True
 
         if retry:
             countdown = random.uniform(0, 2 ** retries)
