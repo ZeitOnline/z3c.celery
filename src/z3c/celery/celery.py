@@ -100,7 +100,7 @@ class TransactionAwareTask(celery.Task):
         Returns whatever the task returns itself.
 
         """
-        running_asynchronously = kw.pop('_run_asynchronously_', False)
+        run_asynchronously = kw.pop('_run_asynchronously_', False)
         principal_id = kw.pop('_principal_id_', None)
         # There is currently no other way to get the task_id to the worker, see
         # https://github.com/celery/celery/issues/2633
@@ -108,7 +108,7 @@ class TransactionAwareTask(celery.Task):
         if task_id:
             self.task_id = task_id
 
-        if running_asynchronously:
+        if run_asynchronously:
             result = self.run_in_worker(principal_id, args, kw)
         else:
             result = self.run_in_same_process(args, kw)
@@ -207,7 +207,9 @@ class TransactionAwareTask(celery.Task):
             return super(TransactionAwareTask, self).apply_async(
                 args, kw, task_id=task_id, **options)
         else:
-            kw['_run_asynchronously_'] = self.run_asynchronously()
+            # Hook so tests can force __call__ to use run_in_worker even when
+            # always_eager is True, by passing in this kw explicitly.
+            kw.setdefault('_run_asynchronously_', True)
             celery_session.add_call(
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id, **options)
@@ -222,15 +224,6 @@ class TransactionAwareTask(celery.Task):
         This method is a hook to be able to change this behaviour in tests.
         """
         return self.app.conf['task_always_eager']
-
-    def run_asynchronously(self):
-        """If `True` the task is run in its own transaction context.
-
-        Default: `True`
-
-        This method is a hook to be able to change the behaviour in tests.
-        """
-        return True
 
     def _assert_json_serializable(self, *args, **kw):
         json.dumps(args)
