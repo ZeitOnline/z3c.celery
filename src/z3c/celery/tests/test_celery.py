@@ -43,8 +43,8 @@ def test_celery__TransactionAwareTask__delay__2(interaction):
 
 def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
-    run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
-    with mock.patch(run_instantly, return_value=False), \
+    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(async, new=True), \
             mock.patch('celery.utils.gen_unique_id', return_value='<task_id>'):
         eager_task.delay('1st param', datetime='now()')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
@@ -104,8 +104,8 @@ def test_celery__TransactionAwareTask__apply_async__2(interaction):
 def test_celery__TransactionAwareTask__apply_async__3(
         interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
-    run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
-    with mock.patch(run_instantly, return_value=False):
+    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(async, new=True):
         eager_task.apply_async(('1st param',), dict(datetime='now()'),
                                task_id='<task_id>')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
@@ -131,8 +131,8 @@ def test_celery__TransactionAwareTask__apply_async__5(
     """It processes the missing kw argument as emtpy dict."""
     # We need to make this a bit complicated as we want to see the actual call
     # of __call__ after the argument handling
-    run_instantly = 'z3c.celery.celery.TransactionAwareTask.run_instantly'
-    with mock.patch(run_instantly, return_value=False):
+    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(async, new=True):
         eager_task.apply_async(('1st param',), task_id='<task_id>')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:

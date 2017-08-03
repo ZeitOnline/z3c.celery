@@ -190,6 +190,8 @@ class TransactionAwareTask(celery.Task):
             connection.close()
             zope.component.hooks.setSite(old_site)
 
+    _eager_use_session_ = False  # Hook for tests
+
     def apply_async(self, args=None, kw=None, task_id=None, **options):
         self._assert_json_serializable(args, kw, task_id, **options)
         if kw is None:
@@ -199,7 +201,22 @@ class TransactionAwareTask(celery.Task):
         kw['_task_id_'] = task_id
         kw['_principal_id_'] = self._get_current_principal_id()
 
-        if self.run_instantly():
+        # Accomodations for tests:
+        # 1. Normally we defer (asynchronous) task execution to the transaction
+        # commit via celery_session (see else-branch below). But in
+        # always_eager mode the execution is synchronous, so the whole task
+        # would run _during_ the commit phase, which totally breaks if inside
+        # the task the transaction is touched in any way, e.g. by calling for a
+        # savepoint. Since we need to support this kind of completely normal
+        # behaviour, we bypass the session in always_eager mode.
+        # 2. To simplify tests concerning our celery-integration mechanics we
+        # provide a hook so tests can force using the session even in
+        # always_eager mode (because otherwise those tests would have to use an
+        # end-to-end setup, which would make the introspection they need
+        # complicated if not impossible).
+        # XXX These actually rather belongs into CelerySession, but that would
+        # get mechanically complicated.
+        if self.app.conf['task_always_eager'] and not self._eager_use_session_:
             self.__call__(*args, **kw)
         elif not kw['_principal_id_']:
             # Tests run a `ping.delay()` task beforehand which we handle here
@@ -214,16 +231,6 @@ class TransactionAwareTask(celery.Task):
                 super(TransactionAwareTask, self).apply_async,
                 args, kw, task_id, **options)
         return self.AsyncResult(task_id)
-
-    def run_instantly(self):
-        """If `True` run the task instantly.
-
-        Otherwise starting the task is delayed to the end of the transaction.
-        By default in tests tasks run instantly.
-
-        This method is a hook to be able to change this behaviour in tests.
-        """
-        return self.app.conf['task_always_eager']
 
     def _assert_json_serializable(self, *args, **kw):
         json.dumps(args)
