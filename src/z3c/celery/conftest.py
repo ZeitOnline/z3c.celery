@@ -2,19 +2,16 @@ from __future__ import absolute_import
 import collections
 import copy
 import celery.contrib.testing.app
+import os
 import pkg_resources
 import plone.testing.zca
-import plone.testing.zodb
 import pytest
 import tempfile
 import transaction
 import z3c.celery
 import z3c.celery.celery
 import z3c.celery.testing
-import zope.event
 import zope.principalregistry.principalregistry
-import zope.processlifetime
-import zope.publisher.browser
 import zope.security.management
 import zope.security.testing
 
@@ -96,8 +93,8 @@ def eager_celery_app(zope_conf):
 @pytest.fixture(scope='session')
 def celery_config(zope_conf):
     return {
-        'broker_url': 'redis://localhost:6379/12',
-        'result_backend': 'redis://localhost:6379/12',
+        'broker_url': os.environ['Z3C_CELERY_BROKER'],
+        'result_backend': os.environ['Z3C_CELERY_BROKER'],
         'worker_send_task_events': True,
         'task_send_sent_event': True,
         'task_remote_tracebacks': True,
