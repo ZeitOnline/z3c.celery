@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-import mock
 import celery.contrib.pytest
+import mock
 import plone.testing
 import z3c.celery
 
@@ -11,9 +11,17 @@ class EagerLayer(plone.testing.Layer):
         # No isolation problem, end to end tests use a separate celery app
         # which is provided by EndToEndLayer (below).
         z3c.celery.CELERY.conf.task_always_eager = True
+        # Fake just enough to make AsyncResult work in eager mode; this is
+        # supported by special handling in TransactionAwareTask.__call__().
+        z3c.celery.CELERY.conf.result_backend = 'cache+memory://'
+        self['celery_eager_backend_patch'] = mock.patch(
+            'celery.backends.base.Backend._ensure_not_eager')
+        self['celery_eager_backend_patch'].start()
 
     def tearDown(self):
         z3c.celery.CELERY.conf.task_always_eager = False
+        self['celery_eager_backend_patch'].stop()
+        del self['celery_eager_backend_patch']
 
 EAGER_LAYER = EagerLayer()
 

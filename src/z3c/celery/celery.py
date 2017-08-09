@@ -108,10 +108,24 @@ class TransactionAwareTask(celery.Task):
         if task_id:
             self.task_id = task_id
 
-        if run_asynchronously:
-            result = self.run_in_worker(principal_id, args, kw)
-        else:
-            result = self.run_in_same_process(args, kw)
+        try:
+            if run_asynchronously:
+                result = self.run_in_worker(principal_id, args, kw)
+            else:
+                result = self.run_in_same_process(args, kw)
+            state = celery.states.SUCCESS
+        except Exception as e:
+            result = e
+            # XXX AsyncResult in eager mode is incomplete. It's an uphill
+            # battle of reimplementing `celery.app.trace.trace_task()`; we're
+            # at least missing states.RETRY here.
+            state = celery.states.FAILURE
+            raise
+        finally:
+            # Accomodation for tests: make AsyncResult work in eager mode
+            if task_id and self.app.conf['task_always_eager']:
+                self.app.backend.store_result(task_id, result, state)
+
         return result
 
     def run_in_same_process(self, args, kw):
