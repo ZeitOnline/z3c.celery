@@ -2,6 +2,20 @@ from __future__ import absolute_import
 import mock
 import celery.contrib.pytest
 import plone.testing
+import z3c.celery
+
+
+class EagerLayer(plone.testing.Layer):
+
+    def setUp(self):
+        # No isolation problem, end to end tests use a separate celery app
+        # which is provided by EndToEndLayer (below).
+        z3c.celery.CELERY.conf.task_always_eager = True
+
+    def tearDown(self):
+        z3c.celery.CELERY.conf.task_always_eager = False
+
+EAGER_LAYER = EagerLayer()
 
 
 class EndToEndLayer(plone.testing.Layer):
