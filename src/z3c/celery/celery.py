@@ -77,6 +77,12 @@ def login_principal(principal):
     zope.security.management.newInteraction(request)
 
 
+def update_principal(principal):
+    """Update an interaction with `principal`."""
+    interaction = zope.security.management.queryInteraction()
+    interaction.participations[0].setPrincipal(principal)
+
+
 class TransactionAwareTask(celery.Task):
     """Wrap every Task execution in a transaction begin/commit/abort.
 
