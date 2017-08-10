@@ -12,7 +12,6 @@ import contextlib
 import json
 import logging
 import random
-import sys
 import time
 import transaction
 import transaction.interfaces
@@ -75,6 +74,12 @@ def login_principal(principal):
     request = zope.publisher.browser.TestRequest()
     request.setPrincipal(principal)
     zope.security.management.newInteraction(request)
+
+
+def update_principal(principal):
+    """Update an interaction with `principal`."""
+    interaction = zope.security.management.queryInteraction()
+    interaction.participations[0].setPrincipal(principal)
 
 
 class TransactionAwareTask(celery.Task):
