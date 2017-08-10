@@ -15,6 +15,7 @@ class EagerLayer(plone.testing.Layer):
     def tearDown(self):
         z3c.celery.CELERY.conf.task_always_eager = False
 
+
 EAGER_LAYER = EagerLayer()
 
 
