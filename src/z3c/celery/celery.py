@@ -12,7 +12,6 @@ import contextlib
 import json
 import logging
 import random
-import sys
 import time
 import transaction
 import transaction.interfaces
