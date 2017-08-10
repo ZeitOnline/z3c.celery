@@ -13,6 +13,11 @@ when running the server.
 `z3c.celery` provides its own celery app: ``z3c.celery.CELERY``. It does the
 actual the integration work.
 
+Jobs by default run as the same principal that was active when the job was
+enqueued. You can override this by passing a different principal id to ``delay``::
+
+    my_task.delay(my, args, etc, _principal_id_='zope.otheruser')
+
 
 Worker setup
 ------------

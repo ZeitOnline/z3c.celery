@@ -83,6 +83,18 @@ def test_celery__TransactionAwareTask__delay__5(celery_session_worker, zcml):
     assert 'User' == result2.get()
 
 
+def test_celery__TransactionAwareTask__delay__6(celery_session_worker, zcml):
+    """It allows overriding the principal."""
+    auth = zope.component.getUtility(
+        zope.authentication.interfaces.IAuthentication)
+    principal = auth.getPrincipal('example.user')
+    z3c.celery.celery.login_principal(principal)
+    result = get_principal_title_task.delay(_principal_id_='zope.user')
+
+    transaction.commit()
+    assert 'User' == result.get()
+
+
 def test_celery__TransactionAwareTask__apply_async__1():
     """It raises a TypeError if arguments are not JSON serializable."""
     with pytest.raises(TypeError):

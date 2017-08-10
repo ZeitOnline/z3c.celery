@@ -199,7 +199,7 @@ class TransactionAwareTask(celery.Task):
         if task_id is None:
             task_id = celery.utils.gen_unique_id()
         kw['_task_id_'] = task_id
-        kw['_principal_id_'] = self._get_current_principal_id()
+        kw.setdefault('_principal_id_', self._get_current_principal_id())
 
         # Accomodations for tests:
         # 1. Normally we defer (asynchronous) task execution to the transaction
