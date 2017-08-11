@@ -217,9 +217,9 @@ class TransactionAwareTask(celery.Task):
         # get mechanically complicated.
         if self.app.conf['task_always_eager'] and not self._eager_use_session_:
             self.__call__(*args, **kw)
-        elif not kw['_principal_id_']:
-            # Tests run a `ping.delay()` task beforehand which we handle here
-            # separately:
+        elif self.name == 'celery.ping':
+            # Part of celery.contrib.testing setup, we need to perform this
+            # immediately, because it has no transaction integration.
             return super(TransactionAwareTask, self).apply_async(
                 args, kw, task_id=task_id, **options)
         else:
