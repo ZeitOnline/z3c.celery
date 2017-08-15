@@ -23,6 +23,10 @@ class ZopeLoader(celery.loaders.app.AppLoader):
             logging.config.fileConfig(config_file, dict(
                 __file__=config_file, here=os.path.dirname(config_file)))
 
+        if self.app.conf.get('DEBUG_WORKER'):
+            assert self.app.conf.get('worker_pool') == 'solo'
+            self.on_worker_process_init()
+
     def on_worker_process_init(self):
         conf = self.app.conf
         configfile = conf.get('ZOPE_CONF')
