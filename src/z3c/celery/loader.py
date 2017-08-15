@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import celery.loaders.app
 import celery.signals
+import celery.utils.collections
+import imp
 import logging.config
 import os.path
 import zope.app.wsgi
@@ -35,3 +37,30 @@ class ZopeLoader(celery.loaders.app.AppLoader):
     def on_worker_shutdown(self):
         if 'ZODB' in self.app.conf:
             self.app.conf['ZODB'].close()
+
+    def read_configuration(self):
+        pyfile = os.environ.get('CELERY_CONFIG_FILE')
+        if pyfile:
+            module = self._import_pyfile(pyfile)
+            return celery.utils.collections.DictAttribute(module)
+        else:
+            return super(ZopeLoader, self).read_configuration()
+
+    def _import_pyfile(self, filename):
+        """Applies Celery configuration by reading the given python file
+        (absolute filename), which unfortunately Celery does not support.
+
+        (Code inspired by flask.config.Config.from_pyfile)
+        """
+        module = imp.new_module('config')
+        module.__file__ = filename
+        try:
+            with open(filename) as config_file:
+                exec(compile(
+                    config_file.read(), filename, 'exec'), module.__dict__)
+        except IOError as e:
+            e.strerror = 'Unable to load configuration file (%s)' % e.strerror
+            raise e
+        else:
+            return module
+
