@@ -39,12 +39,26 @@ class ZopeLoader(celery.loaders.app.AppLoader):
             self.app.conf['ZODB'].close()
 
     def read_configuration(self):
+        """Read configuration from either
+
+        * an importable python module, given by its dotted name in
+          CELERY_CONFIG_MODULE. Note that this can also be set via
+          `$ bin/celery worker --config=<modulename>`. (Also note that "celery
+          worker" includes the cwd on the pythonpath.)
+        * or a plain python file (given by an absolute path in
+          CELERY_CONFIG_FILE)
+
+        If neither env variable is present, no configuration is read, and some
+        defaults are used instead that most probably don't work (they assume
+        amqp on localhost as broker, for example).
+        """
+        module = os.environ.get('CELERY_CONFIG_MODULE')
+        if module:
+            return super(ZopeLoader, self).read_configuration()
         pyfile = os.environ.get('CELERY_CONFIG_FILE')
         if pyfile:
             module = self._import_pyfile(pyfile)
             return celery.utils.collections.DictAttribute(module)
-        else:
-            return super(ZopeLoader, self).read_configuration()
 
     def _import_pyfile(self, filename):
         """Applies Celery configuration by reading the given python file
@@ -63,4 +77,3 @@ class ZopeLoader(celery.loaders.app.AppLoader):
             raise e
         else:
             return module
-
