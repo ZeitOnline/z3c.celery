@@ -3,10 +3,7 @@ from .loader import ZopeLoader
 from .session import celery_session
 import ZODB.POSException
 import celery
-import celery.bootsteps
 import celery.exceptions
-import celery.loaders.app
-import celery.signals
 import celery.utils
 import contextlib
 import json
@@ -14,13 +11,10 @@ import logging
 import random
 import time
 import transaction
-import transaction.interfaces
 import zope.app.publication.zopepublication
-import zope.app.wsgi
 import zope.authentication.interfaces
 import zope.component
 import zope.component.hooks
-import zope.exceptions.log
 import zope.publisher.browser
 import zope.security.management
 
@@ -53,7 +47,7 @@ class HandleAfterAbort(RuntimeError):
 
 
 class Abort(HandleAfterAbort):
-    """Exception to signal successfull task completion, but transaction should
+    """Exception to signal successful task completion, but transaction should
     be aborted instead of commited.
     """
 
