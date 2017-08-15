@@ -52,14 +52,10 @@ class HandleAfterAbort(RuntimeError):
         return self.message
 
 
-class Abort(RuntimeError):
+class Abort(HandleAfterAbort):
     """Exception to signal successfull task completion, but transaction should
     be aborted instead of commited.
     """
-
-    @property
-    def result(self):
-        return self.args[0]
 
 
 def get_principal(principal_id):
@@ -116,9 +112,10 @@ class TransactionAwareTask(celery.Task):
     def run_in_same_process(self, args, kw):
         try:
             return super(TransactionAwareTask, self).__call__(*args, **kw)
-        except Abort as e:
-            self.transaction_abort()
-            return e.result
+        except Abort as handle:
+            transaction.abort()
+            handle()
+            return handle.message
         except HandleAfterAbort as handle:
             handle()
             raise
@@ -134,15 +131,15 @@ class TransactionAwareTask(celery.Task):
             try:
                 result = super(TransactionAwareTask, self).__call__(
                     *args, **kw)
-            except Abort as e:
-                self.transaction_abort()
-                return e.result
             except HandleAfterAbort as handle:
                 self.transaction_abort()
                 self.transaction_begin(principal_id)
                 handle()
                 self.transaction_commit()
-                raise
+                if isinstance(handle, Abort):
+                    return handle.message
+                else:
+                    raise
             except Exception:
                 self.transaction_abort()
                 raise

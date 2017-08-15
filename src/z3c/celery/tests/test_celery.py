@@ -363,7 +363,7 @@ def test_celery__TransactionAwareTask__run_in_worker__1__cov(
 def success_but_abort_transaction():
     site = zope.component.hooks.getSite()
     site['flub'] = 'will not be written'
-    raise Abort('done')
+    raise Abort(lambda: None, message='done')
 
 
 def test_celery__TransactionAwareTask__run_in_worker__2(
