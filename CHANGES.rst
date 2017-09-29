@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-0.2 (unreleased)
+1.0 (2017-09-29)
 ================
 
 - Introduce ``Abort`` control flow exception
