@@ -1,5 +1,5 @@
-z3c.celery.celery
-=================
+z3c\.celery\.celery
+===================
 
 .. automodule:: z3c.celery.celery
 
@@ -9,7 +9,6 @@ z3c.celery.celery
 
    .. autosummary::
    
-      get_config_source
       get_principal
       login_principal
    
@@ -22,7 +21,6 @@ z3c.celery.celery
    .. autosummary::
    
       TransactionAwareTask
-      ZopeLoader
    
    
 
@@ -32,6 +30,7 @@ z3c.celery.celery
 
    .. autosummary::
    
+      Abort
       HandleAfterAbort
    
    

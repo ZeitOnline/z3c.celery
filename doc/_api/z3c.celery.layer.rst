@@ -1,5 +1,5 @@
-z3c.celery.layer
-================
+z3c\.celery\.layer
+==================
 
 .. automodule:: z3c.celery.layer
 
@@ -13,6 +13,7 @@ z3c.celery.layer
 
    .. autosummary::
    
+      EagerLayer
       EndToEndLayer
    
    
