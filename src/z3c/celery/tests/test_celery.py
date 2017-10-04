@@ -405,3 +405,30 @@ def test_celery__HandleAfterAbort__2():
     err = HandleAfterAbort(save_args, 2, 3, message=u'test-messäge', kw1='23')
     err()
     assert {'args': (2, 3), 'kwargs': {'kw1': '23'}} == data
+
+
+class CommitExceptionDataManager(NoopDatamanager):
+    """DataManager which raises an exception in tpc_vote."""
+
+    def tpc_vote(self, trans):
+        raise RuntimeError('provoked')
+
+    def sortKey(self):
+        # Make sure we are running after the in thread execution of the task so
+        # that we can throw an Error as last part of vote:
+        return '~~sort-me-last'
+
+
+@shared_task
+def commit_error_task(bind=True):
+    transaction.get().join(CommitExceptionDataManager())
+
+
+def test_celery__TransactionAwareTask__run_in_worker__3(
+        celery_session_worker, interaction):
+    """It always ends the interaction even when commit raises."""
+    commit_error_task.delay()
+    transaction.commit()
+    result = get_principal_title_task.delay()
+    transaction.commit()
+    assert 'User' == result.get()

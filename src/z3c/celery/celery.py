@@ -159,12 +159,24 @@ class TransactionAwareTask(celery.Task):
             login_principal(get_principal(principal_id))
 
     def transaction_abort(self):
-        transaction.abort()
-        zope.security.management.endInteraction()
+        try:
+            transaction.abort()
+        except:
+            log.warning('Error during abort', exc_info=True)
+            raise
+        finally:
+            zope.security.management.endInteraction()
 
     def transaction_commit(self):
-        transaction.commit()
-        zope.security.management.endInteraction()
+        try:
+            transaction.commit()
+        except ZODB.POSException.ConflictError:
+            raise
+        except:
+            log.warning('Error during commit', exc_info=True)
+            raise
+        finally:
+            zope.security.management.endInteraction()
 
     @contextlib.contextmanager
     def configure_zope(self):

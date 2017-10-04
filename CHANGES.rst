@@ -5,7 +5,8 @@ Change log for z3c.celery
 1.1.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Always call endInteraction, even on error during commit or abort,
+  so we don't pollute the interaction state for the next task run
 
 
 1.0 (2017-09-29)
