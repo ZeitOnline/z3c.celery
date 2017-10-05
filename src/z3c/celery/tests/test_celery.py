@@ -259,6 +259,34 @@ def test_celery__TransactionAwareTask____call____2__cov(
     assert 2 == sleep.call_count  # We have max_retries=1 for this task
 
 
+@shared_task(max_retries=2)
+def conflict_after_abort_task():
+    """Dummy task which injects a DataManager that votes a ConflictError."""
+    raise HandleAfterAbort(conflicts_once)
+
+
+conflicts_after_abort = 0
+
+
+def conflicts_once():
+    global conflicts_after_abort
+    if conflicts_after_abort == 0:
+        transaction.get().join(VoteExceptionDataManager())
+    conflicts_after_abort += 1
+
+
+def test_celery__TransactionAwareTask____call____2a(eager_celery_app):
+    """It retries on ConflictError during HandleAfterAbort."""
+    assert conflicts_after_abort == 0
+    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
+    with mock.patch(configure_zope), \
+            mock.patch('time.sleep') as sleep:
+        with pytest.raises(HandleAfterAbort):
+            conflict_after_abort_task(_run_asynchronously_=True)
+        assert sleep.call_count == 1
+        assert conflicts_after_abort == 2
+
+
 def test_celery__TransactionAwareTask____call____3(
         celery_session_worker, zcml):
     """It runs as given principal in asynchronous mode."""

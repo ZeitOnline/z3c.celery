@@ -7,6 +7,8 @@ Change log for z3c.celery
 
 - Also apply "always endInteration" to HandleAfterAbort
 
+- Also apply "retry on ConflictError" to HandleAfterAbort
+
 
 1.0.1 (2017-10-04)
 ==================

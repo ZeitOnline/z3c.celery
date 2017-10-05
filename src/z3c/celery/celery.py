@@ -125,16 +125,25 @@ class TransactionAwareTask(celery.Task):
                     return super(TransactionAwareTask, self).__call__(
                         *args, **kw)
             except HandleAfterAbort as handle:
-                with self.transaction(principal_id):
-                    handle()
+                for handle_retries in range(self.max_retries):
+                    try:
+                        with self.transaction(principal_id):
+                            handle()
+                    except ZODB.POSException.ConflictError:
+                        self.backoff(handle_retries)
+                        continue
+                    else:
+                        break
+                else:
+                    log.warning('Giving up on %r after %s retries',
+                                handle, self.max_retries)
+
                 if isinstance(handle, Abort):
                     return handle.message
                 else:
-                    raise
+                    raise handle
             except ZODB.POSException.ConflictError:
-                countdown = random.uniform(0, 2 ** retries)
-                log.warning('Retry in {} seconds.'.format(countdown))
-                time.sleep(countdown)
+                self.backoff(retries)
                 return self.run_in_worker(
                     principal_id, args, kw, retries=retries + 1)
 
@@ -171,6 +180,11 @@ class TransactionAwareTask(celery.Task):
         finally:
             connection.close()
             zope.component.hooks.setSite(old_site)
+
+    def backoff(self, retries):
+        countdown = random.uniform(0, 2 ** retries)
+        log.warning('Retry in {} seconds.'.format(countdown))
+        time.sleep(countdown)
 
     _eager_use_session_ = False  # Hook for tests
 
