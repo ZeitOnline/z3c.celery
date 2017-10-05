@@ -119,62 +119,42 @@ class TransactionAwareTask(celery.Task):
             raise celery.exceptions.MaxRetriesExceededError(
                 principal_id, args, kw)
 
-        retry = False
         with self.configure_zope():
-            self.transaction_begin(principal_id)
             try:
-                result = super(TransactionAwareTask, self).__call__(
-                    *args, **kw)
+                with self.transaction(principal_id):
+                    return super(TransactionAwareTask, self).__call__(
+                        *args, **kw)
             except HandleAfterAbort as handle:
-                self.transaction_abort()
-                self.transaction_begin(principal_id)
-                handle()
-                self.transaction_commit()
+                with self.transaction(principal_id):
+                    handle()
                 if isinstance(handle, Abort):
                     return handle.message
                 else:
                     raise
-            except Exception:
-                self.transaction_abort()
-                raise
-            else:
-                try:
-                    self.transaction_commit()
-                except ZODB.POSException.ConflictError:
-                    log.warning('Conflict while publishing', exc_info=True)
-                    self.transaction_abort()
-                    retry = True
+            except ZODB.POSException.ConflictError:
+                countdown = random.uniform(0, 2 ** retries)
+                log.warning('Retry in {} seconds.'.format(countdown))
+                time.sleep(countdown)
+                return self.run_in_worker(
+                    principal_id, args, kw, retries=retries + 1)
 
-        if retry:
-            countdown = random.uniform(0, 2 ** retries)
-            log.warning('Retry in {} seconds.'.format(countdown))
-            time.sleep(countdown)
-            result = self.run_in_worker(
-                principal_id, args, kw, retries=retries + 1)
-        return result
-
-    def transaction_begin(self, principal_id):
+    @contextlib.contextmanager
+    def transaction(self, principal_id):
         if principal_id:
             transaction.begin()
             login_principal(get_principal(principal_id))
-
-    def transaction_abort(self):
         try:
+            yield
+        except:
             transaction.abort()
-        except:
-            log.warning('Error during abort', exc_info=True)
             raise
-        finally:
-            zope.security.management.endInteraction()
-
-    def transaction_commit(self):
-        try:
-            transaction.commit()
-        except ZODB.POSException.ConflictError:
-            raise
-        except:
-            log.warning('Error during commit', exc_info=True)
-            raise
+        else:
+            try:
+                transaction.commit()
+            except ZODB.POSException.ConflictError:
+                log.warning('Conflict while publishing', exc_info=True)
+                transaction.abort()
+                raise
         finally:
             zope.security.management.endInteraction()
 

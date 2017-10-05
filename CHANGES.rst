@@ -5,7 +5,7 @@ Change log for z3c.celery
 1.1.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Also apply "always endInteration" to HandleAfterAbort
 
 
 1.0.1 (2017-10-04)
