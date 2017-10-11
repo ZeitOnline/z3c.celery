@@ -28,6 +28,7 @@ class ZopeLoader(celery.loaders.app.AppLoader):
             assert self.app.conf.get('worker_pool') == 'solo'
             self.on_worker_process_init()
 
+        # Work around <https://github.com/celery/celery/issues/4323>.
         if self.app.conf.get('worker_boot_timeout'):
             celery.concurrency.asynpool.PROC_ALIVE_TIMEOUT = float(
                 self.app.conf['worker_boot_timeout'])
