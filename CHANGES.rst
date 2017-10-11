@@ -5,7 +5,7 @@ Change log for z3c.celery
 1.1.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Make worker process boot timeout configurable
 
 
 1.0.2 (2017-10-05)

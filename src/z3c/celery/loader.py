@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import celery.concurrency.asynpool
 import celery.loaders.app
 import celery.signals
 import celery.utils.collections
@@ -26,6 +27,10 @@ class ZopeLoader(celery.loaders.app.AppLoader):
         if self.app.conf.get('DEBUG_WORKER'):
             assert self.app.conf.get('worker_pool') == 'solo'
             self.on_worker_process_init()
+
+        if self.app.conf.get('worker_boot_timeout'):
+            celery.concurrency.asynpool.PROC_ALIVE_TIMEOUT = float(
+                self.app.conf['worker_boot_timeout'])
 
     def on_worker_process_init(self):
         conf = self.app.conf
