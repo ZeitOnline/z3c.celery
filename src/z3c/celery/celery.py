@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
+from celery._state import _task_stack
 import ZODB.POSException
 import celery
 import celery.exceptions
@@ -97,15 +98,30 @@ class TransactionAwareTask(celery.Task):
         if task_id:
             self.task_id = task_id
 
-        if run_asynchronously:
-            result = self.run_in_worker(principal_id, args, kw)
-        else:
-            result = self.run_in_same_process(args, kw)
+        is_eager = self.app.conf['task_always_eager']
+        if is_eager:
+            # This is the only part of celery.Task.__call__ that actually is
+            # relevant -- since in non-eager mode, it's not called at all:
+            # celery.app.trace.build_tracer() says, "if the task doesn't define
+            # a custom __call__ method we optimize it away by simply calling
+            # the run method directly".
+            # (Note that the push_request() call in __call__ would be actively
+            # harmful in non-eager mode, since it hides the actual request that
+            # was set by app.trace; but as it's not called, it's not an issue.)
+            _task_stack.push(self)
+        try:
+            if run_asynchronously:
+                result = self.run_in_worker(principal_id, args, kw)
+            else:
+                result = self.run_in_same_process(args, kw)
+        finally:
+            if is_eager:
+                _task_stack.pop()
         return result
 
     def run_in_same_process(self, args, kw):
         try:
-            return super(TransactionAwareTask, self).__call__(*args, **kw)
+            return self.run(*args, **kw)
         except Abort as handle:
             transaction.abort()
             handle()
@@ -122,8 +138,7 @@ class TransactionAwareTask(celery.Task):
         with self.configure_zope():
             try:
                 with self.transaction(principal_id):
-                    return super(TransactionAwareTask, self).__call__(
-                        *args, **kw)
+                    return self.run(*args, **kw)
             except HandleAfterAbort as handle:
                 for handle_retries in range(self.max_retries):
                     try:

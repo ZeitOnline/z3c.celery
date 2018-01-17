@@ -178,10 +178,10 @@ def test_celery__TransactionAwareTask____call____1__cov(
     As it is hard to collect coverage for subprocesses we use this test for
     coverage only.
     """
-    task_call = 'celery.Task.__call__'
     configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
     with mock.patch(configure_zope), \
-            mock.patch(task_call, side_effect=RuntimeError) as task_call, \
+            mock.patch.object(eager_task, 'run',
+                              side_effect=RuntimeError) as run, \
             mock.patch('transaction.abort') as abort:
 
         zope.security.management.endInteraction()
@@ -190,7 +190,7 @@ def test_celery__TransactionAwareTask____call____1__cov(
             # by the mock
             eager_task(_run_asynchronously_=True)
 
-    assert task_call.called
+    assert run.called
     assert abort.called
 
 
