@@ -34,25 +34,7 @@ def test_logging__TaskFormatter__format__1(logger_and_stream):
     assert 'task_id:  name:  We have no task.\n' == logged.getvalue()
 
 
-def test_logging__TaskFormatter__format__2(eager_celery_app):
-    """It provides task_id and task_name in eager mode."""
-
-    task_id = '<task_id_{}>'.format(uuid.uuid4())
-    with tempfile.NamedTemporaryFile(delete=False) as logfile:
-        shared_logging_task.apply_async(
-            (logfile.name,), task_id=task_id)
-
-        logfile.seek(0)
-        log_result = logfile.read()
-
-        assert ('task_id: {} '
-                'name: z3c.celery.tests.shared_tasks.shared_logging_task '
-                'we are logging'.format(task_id) in log_result)
-        assert "__traceback_info__: we can handle traceback info" in log_result
-        assert "NotImplementedError" in log_result
-
-
-def test_logging__TaskFormatter__format__3(celery_session_worker):
+def test_logging__TaskFormatter__format__2(celery_session_worker):
     """It provides task_id and task_name in async mode."""
 
     task_id = '<task_id_{}>'.format(uuid.uuid4())

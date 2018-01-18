@@ -15,7 +15,7 @@ class TaskFormatter(zope.exceptions.log.Formatter):
         task = get_current_task()
         if task:
             record.__dict__.update(
-                task_id=getattr(task, 'task_id', '<unknown>'),
+                task_id=task.request.id,
                 task_name=task.name)
         else:
             record.__dict__.setdefault('task_name', '')

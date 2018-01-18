@@ -44,8 +44,7 @@ def test_celery__TransactionAwareTask__delay__2(interaction):
 def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
     async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
-    with mock.patch(async, new=True), \
-            mock.patch('celery.utils.gen_unique_id', return_value='<task_id>'):
+    with mock.patch(async, new=True):
         eager_task.delay('1st param', datetime='now()')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
@@ -53,8 +52,7 @@ def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
         transaction.commit()
     task_call.assert_called_with(
         '1st param', datetime='now()',
-        _run_asynchronously_=True, _principal_id_=u'zope.user',
-        _task_id_='<task_id>')
+        _run_asynchronously_=True, _principal_id_=u'zope.user')
 
 
 def test_celery__TransactionAwareTask__delay__4(interaction, eager_celery_app):
@@ -118,16 +116,14 @@ def test_celery__TransactionAwareTask__apply_async__3(
     """It extracts the principal from the interaction if run in async mode."""
     async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
     with mock.patch(async, new=True):
-        eager_task.apply_async(('1st param',), dict(datetime='now()'),
-                               task_id='<task_id>')
+        eager_task.apply_async(('1st param',), dict(datetime='now()'))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         zope.security.management.endInteraction()
         transaction.commit()
     task_call.assert_called_with(
         '1st param', datetime='now()',
-        _run_asynchronously_=True, _principal_id_=u'zope.user',
-        _task_id_='<task_id>')
+        _run_asynchronously_=True, _principal_id_=u'zope.user')
 
 
 def test_celery__TransactionAwareTask__apply_async__4(
@@ -145,13 +141,12 @@ def test_celery__TransactionAwareTask__apply_async__5(
     # of __call__ after the argument handling
     async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
     with mock.patch(async, new=True):
-        eager_task.apply_async(('1st param',), task_id='<task_id>')
+        eager_task.apply_async(('1st param',))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
         transaction.commit()
     task_call.assert_called_with(
-        '1st param', _run_asynchronously_=True, _principal_id_=u'zope.user',
-        _task_id_='<task_id>')
+        '1st param', _run_asynchronously_=True, _principal_id_=u'zope.user')
 
 
 @shared_task
@@ -319,7 +314,7 @@ def test_celery__TransactionAwareTask____call____3__cov(
 @shared_task(bind=True)
 def get_task_id(self):
     """Get the task id of the job."""
-    return self.task_id  # pragma: no cover
+    return self.request.id
 
 
 def test_celery__TransactionAwareTask____call____4(

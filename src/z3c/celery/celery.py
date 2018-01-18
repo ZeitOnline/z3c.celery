@@ -85,18 +85,12 @@ class TransactionAwareTask(celery.Task):
                                       run tasks easily inline)
             _principal_id_ ... run asynchronous task as this user, ignored if
                                running synchronously (optional)
-            _task_id_ ... id of the task
 
         Returns whatever the task returns itself.
 
         """
         run_asynchronously = kw.pop('_run_asynchronously_', False)
         principal_id = kw.pop('_principal_id_', None)
-        # There is currently no other way to get the task_id to the worker, see
-        # https://github.com/celery/celery/issues/2633
-        task_id = kw.pop('_task_id_', None)
-        if task_id:
-            self.task_id = task_id
 
         is_eager = self.app.conf['task_always_eager']
         if is_eager:
@@ -209,7 +203,6 @@ class TransactionAwareTask(celery.Task):
             kw = {}
         if task_id is None:
             task_id = celery.utils.gen_unique_id()
-        kw['_task_id_'] = task_id
         kw.setdefault('_principal_id_', self._get_current_principal_id())
 
         # Accomodations for tests:
