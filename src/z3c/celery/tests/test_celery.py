@@ -7,7 +7,6 @@ from z3c.celery.celery import HandleAfterAbort, Abort
 from z3c.celery.session import celery_session
 from z3c.celery.testing import open_zodb_copy
 import ZODB.POSException
-import celery.exceptions
 import datetime
 import mock
 import pytest

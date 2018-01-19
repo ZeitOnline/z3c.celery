@@ -178,7 +178,7 @@ class TransactionAwareTask(celery.Task):
             login_principal(get_principal(principal_id))
         try:
             yield
-        except:
+        except Exception:
             transaction.abort()
             raise
         else:
