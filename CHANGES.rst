@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.2.0 (unreleased)
+1.2.0 (2018-01-23)
 ==================
 
 - Support task retry
