@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
+from celery.utils.serialization import raise_with_context
 import ZODB.POSException
 import celery
 import celery.exceptions
@@ -51,6 +52,23 @@ class Abort(HandleAfterAbort):
     """Exception to signal successful task completion, but transaction should
     be aborted instead of commited.
     """
+
+
+class Retry(celery.exceptions.Retry, HandleAfterAbort):
+    """With cooperation from TransactionAwareTask.retry(), this moves the
+    actual re-queueing of the task into the proper "error handling"
+    transaction phase.
+    """
+
+    def __init__(self, *args, **kw):
+        self.signature = kw.pop('signature', None)
+        celery.exceptions.Retry.__init__(self, *args, **kw)
+
+    def __call__(self):
+        try:
+            self.signature.apply_async()
+        except Exception as exc:
+            raise celery.exceptions.Reject(exc, requeue=False)
 
 
 def get_principal(principal_id):
@@ -125,10 +143,6 @@ class TransactionAwareTask(celery.Task):
             raise
 
     def run_in_worker(self, principal_id, args, kw, retries=0):
-        if retries > self.max_retries:
-            raise celery.exceptions.MaxRetriesExceededError(
-                principal_id, args, kw)
-
         with self.configure_zope():
             try:
                 with self.transaction(principal_id):
@@ -138,8 +152,13 @@ class TransactionAwareTask(celery.Task):
                     try:
                         with self.transaction(principal_id):
                             handle()
-                    except ZODB.POSException.ConflictError:
-                        self.backoff(handle_retries)
+                    except celery.exceptions.Retry:
+                        # We have to handle ConflictErrors manually, since we
+                        # don't want to retry the whole task (which was
+                        # erroneous anyway), but only the after-abort portion.
+                        countdown = random.uniform(0, 2 ** handle_retries)
+                        log.warning('Retry in {} seconds.'.format(countdown))
+                        time.sleep(countdown)
                         continue
                     else:
                         break
@@ -151,10 +170,6 @@ class TransactionAwareTask(celery.Task):
                     return handle.message
                 else:
                     raise handle
-            except ZODB.POSException.ConflictError:
-                self.backoff(retries)
-                return self.run_in_worker(
-                    principal_id, args, kw, retries=retries + 1)
 
     @contextlib.contextmanager
     def transaction(self, principal_id):
@@ -163,7 +178,7 @@ class TransactionAwareTask(celery.Task):
             login_principal(get_principal(principal_id))
         try:
             yield
-        except:
+        except Exception:
             transaction.abort()
             raise
         else:
@@ -172,7 +187,8 @@ class TransactionAwareTask(celery.Task):
             except ZODB.POSException.ConflictError:
                 log.warning('Conflict while publishing', exc_info=True)
                 transaction.abort()
-                raise
+                self.retry(
+                    countdown=random.uniform(0, 2 ** self.request.retries))
         finally:
             zope.security.management.endInteraction()
 
@@ -189,11 +205,6 @@ class TransactionAwareTask(celery.Task):
         finally:
             connection.close()
             zope.component.hooks.setSite(old_site)
-
-    def backoff(self, retries):
-        countdown = random.uniform(0, 2 ** retries)
-        log.warning('Retry in {} seconds.'.format(countdown))
-        time.sleep(countdown)
 
     _eager_use_session_ = False  # Hook for tests
 
@@ -247,6 +258,53 @@ class TransactionAwareTask(celery.Task):
         else:
             principal_id = interaction.participations[0].principal.id
         return principal_id
+
+    def retry(self, args=None, kwargs=None, exc=None, throw=True,
+              eta=None, countdown=None, max_retries=None, **options):
+        # copy&paste from superclass, we need to use a Retry exception that
+        # uses the HandleAfterAbort mechanics to integrate with transactions.
+        request = self.request
+        retries = request.retries + 1
+        max_retries = self.max_retries if max_retries is None else max_retries
+
+        if request.called_directly:
+            raise_with_context(
+                exc or celery.exceptions.Retry('Task can be retried', None))
+
+        if not eta and countdown is None:
+            countdown = self.default_retry_delay
+
+        # Add interaction information now, while it's still present. Our
+        # apply_async() would normally do this, but it's called via
+        # HandleAfterAbort when the original interaction has already ended.
+        options.setdefault('_principal_id_', self._get_current_principal_id())
+
+        S = self.signature_from_request(
+            request, args, kwargs,
+            countdown=countdown, eta=eta, retries=retries,
+            **options
+        )
+
+        if max_retries is not None and retries > max_retries:
+            if exc:
+                raise_with_context(exc)
+            raise self.MaxRetriesExceededError(
+                "Can't retry {0}[{1}] args:{2} kwargs:{3}".format(
+                    self.name, request.id, S.args, S.kwargs))
+
+        ret = Retry(exc=exc, when=eta or countdown, signature=S)
+
+        if request.is_eager:
+            S.apply().get()
+            if throw:
+                raise ret
+            return ret
+
+        if throw:
+            raise ret
+        else:
+            ret()
+            return ret
 
 
 CELERY = celery.Celery(

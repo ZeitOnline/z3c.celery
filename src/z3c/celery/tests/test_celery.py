@@ -7,7 +7,6 @@ from z3c.celery.celery import HandleAfterAbort, Abort
 from z3c.celery.session import celery_session
 from z3c.celery.testing import open_zodb_copy
 import ZODB.POSException
-import celery.exceptions
 import datetime
 import mock
 import pytest
@@ -233,27 +232,6 @@ def test_celery__TransactionAwareTask____call____2(
     assert 'MaxRetriesExceededError' == err.value.__class__.__name__
 
 
-def test_celery__TransactionAwareTask____call____2__cov(
-        interaction, eager_celery_app):
-    """It aborts the transaction and retries in case of a ConflictError.
-
-    As it is hard to collect coverage for sub-processes we use this test for
-    coverage only.
-    """
-    configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
-    with mock.patch(configure_zope), \
-            mock.patch('transaction.abort',
-                       side_effect=transaction.abort) as abort, \
-            mock.patch('time.sleep') as sleep:
-
-        zope.security.management.endInteraction()
-        with pytest.raises(celery.exceptions.MaxRetriesExceededError):
-            conflict_task(_run_asynchronously_=True)
-
-    assert abort.called
-    assert 2 == sleep.call_count  # We have max_retries=1 for this task
-
-
 @shared_task(max_retries=2)
 def conflict_after_abort_task():
     """Dummy task which injects a DataManager that votes a ConflictError."""
@@ -455,3 +433,20 @@ def test_celery__TransactionAwareTask__run_in_worker__3(
     result = get_principal_title_task.delay()
     transaction.commit()
     assert 'User' == result.get()
+
+
+@shared_task(bind=True)
+def get_principal_retry(self):
+    if not self.request.retries:
+        self.retry(countdown=0)
+    interaction = zope.security.management.getInteraction()
+    return [
+        self.request.retries, interaction.participations[0].principal.title]
+
+
+def test_celery__TransactionAwareTask_retry(
+        interaction, celery_session_worker):
+    """It keeps the interaction on retry."""
+    result = get_principal_retry.delay()
+    transaction.commit()
+    assert [1, 'User'] == result.get()
