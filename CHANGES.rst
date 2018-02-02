@@ -5,6 +5,8 @@ Change log for z3c.celery
 1.3.0 (Unreleased)
 ==================
 
+- Add bw-compat for persisted tasks that still have a `_task_id_` parameter
+
 
 1.2.0 (2018-01-23)
 ==================

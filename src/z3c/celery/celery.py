@@ -109,6 +109,9 @@ class TransactionAwareTask(celery.Task):
         """
         run_asynchronously = kw.pop('_run_asynchronously_', False)
         principal_id = kw.pop('_principal_id_', None)
+        # BBB This was removed in 1.2.0 but there still might be (scheduled)
+        # tasks that transmit this argument, so we need to remove it.
+        kw.pop('_task_id_', None)
 
         is_eager = self.app.conf['task_always_eager']
         if is_eager:
