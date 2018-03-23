@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.3.0 (unreleased)
+1.2.2 (2018-03-23)
 ==================
 
 - Ensure ZODB connection can be closed, even if execution is aborted in the
