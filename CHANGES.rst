@@ -5,7 +5,8 @@ Change log for z3c.celery
 1.3.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Ensure ZODB connection can be closed, even if execution is aborted in the
+  middle of a transaction
 
 
 1.2.1 (2018-02-02)

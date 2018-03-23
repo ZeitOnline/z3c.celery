@@ -193,6 +193,7 @@ class TransactionAwareTask(celery.Task):
                 self.retry(
                     countdown=random.uniform(0, 2 ** self.request.retries))
         finally:
+            transaction.abort()
             zope.security.management.endInteraction()
 
     @contextlib.contextmanager
