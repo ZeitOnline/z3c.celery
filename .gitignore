@@ -5,6 +5,7 @@
 .coverage
 .coverage.*
 .installed.cfg
+.pytest_cache/
 .mr.developer.cfg
 .tox/
 auto-checkout/
