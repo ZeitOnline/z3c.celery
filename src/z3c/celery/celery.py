@@ -67,7 +67,9 @@ class Retry(celery.exceptions.Retry, HandleAfterAbort):
     def __call__(self):
         try:
             self.signature.apply_async()
+            log.warning('Task submitted for retry in %s seconds.', self.when)
         except Exception as exc:
+            log.error('Task retry failed', exc_info=True)
             raise celery.exceptions.Reject(exc, requeue=False)
 
 
@@ -160,7 +162,7 @@ class TransactionAwareTask(celery.Task):
                         # don't want to retry the whole task (which was
                         # erroneous anyway), but only the after-abort portion.
                         countdown = random.uniform(0, 2 ** handle_retries)
-                        log.warning('Retry in {} seconds.'.format(countdown))
+                        log.warning('Waiting %s seconds for retry.', countdown)
                         time.sleep(countdown)
                         continue
                     else:
