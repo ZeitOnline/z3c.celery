@@ -2,6 +2,12 @@
 Change log for z3c.celery
 =========================
 
+1.3.0 (unreleased)
+==================
+
+- Nothing changed yet.
+
+
 1.2.3 (2018-06-28)
 ==================
 
