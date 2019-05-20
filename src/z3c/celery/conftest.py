@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import collections
-import copy
 import celery.contrib.testing.app
 import os
 import pkg_resources
@@ -71,7 +70,7 @@ def zope_conf(storage_file):
                 zodb_path=storage_file,
                 ftesting_path=pkg_resources.resource_filename(
                     'z3c.celery', 'ftesting.zcml'),
-                product_config=''))
+                product_config='').encode('ascii'))
         conf.flush()
         yield conf.name
 
@@ -80,14 +79,16 @@ def zope_conf(storage_file):
 def eager_celery_app(zope_conf):
     app = z3c.celery.CELERY
     conf = app.conf
-    old_conf = copy.deepcopy(conf)
+    # deepcopy fails on py3 with infinite recursion,
+    # but tests pass also with a simple copy of the conf
+    old_conf = dict(conf)
     conf['ZOPE_CONF'] = zope_conf
     conf['task_always_eager'] = True
     conf['task_eager_propagates'] = True
     with celery.contrib.testing.app.setup_default_app(app):
         app.set_current()
         yield app
-    app.conf = old_conf
+    app.conf.update(old_conf)
 
 
 @pytest.fixture(scope='session')

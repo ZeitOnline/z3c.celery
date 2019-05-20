@@ -28,6 +28,10 @@ setup(
 
     extras_require={
         'test': [
+            # newer pytest breaks the hell loose
+            # like https://github.com/pytest-dev/pytest/issues/3950
+            # pytest-remove-stale-bytecode is also incompatible
+            'pytest < 3.8.0',
             'gocept.pytestlayer',
             'mock',
             'plone.testing',
@@ -63,8 +67,9 @@ Natural Language :: English
 Operating System :: OS Independent
 Programming Language :: Python
 Programming Language :: Python :: 2
-Programming Language :: Python :: 2 :: Only
 Programming Language :: Python :: 2.7
+Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Database
 Topic :: Software Development

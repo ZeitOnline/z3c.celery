@@ -58,7 +58,8 @@ def test_loader__ZopeLoader__on_worker_init__1__cov(
     configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
     with tempfile.NamedTemporaryFile(delete=False) as logging_ini, \
             tempfile.NamedTemporaryFile(delete=False) as logfile:
-        logging_ini.write(LOGGING_TEMPLATE.format(filename=logfile.name))
+        logging_ini.write(
+            LOGGING_TEMPLATE.format(filename=logfile.name).encode('utf-8'))
         logging_ini.flush()
         eager_celery_app.conf['LOGGING_INI'] = logging_ini.name
         loader = ZopeLoader(app=eager_celery_app)
@@ -71,7 +72,7 @@ def test_loader__ZopeLoader__on_worker_init__1__cov(
                 _run_asynchronously_=True, _principal_id_='example.user')
 
         logfile.seek(0)
-        log_result = logfile.read()
+        log_result = logfile.read().decode('utf-8')
 
         assert ('task_id: None name: z3c.celery.tests.test_loader.'
                 'simple_log Hello Log!\n' == log_result)

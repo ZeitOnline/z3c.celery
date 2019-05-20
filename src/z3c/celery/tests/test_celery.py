@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 from .shared_tasks import get_principal_title_task
 from celery import shared_task
+from celery.five import PY3
 from z3c.celery.celery import HandleAfterAbort, Abort
 from z3c.celery.session import celery_session
 from z3c.celery.testing import open_zodb_copy
@@ -42,8 +43,8 @@ def test_celery__TransactionAwareTask__delay__2(interaction):
 
 def test_celery__TransactionAwareTask__delay__3(interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
-    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
-    with mock.patch(async, new=True):
+    asynch = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(asynch, new=True):
         eager_task.delay('1st param', datetime='now()')
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
@@ -113,8 +114,8 @@ def test_celery__TransactionAwareTask__apply_async__2(interaction):
 def test_celery__TransactionAwareTask__apply_async__3(
         interaction, eager_celery_app):
     """It extracts the principal from the interaction if run in async mode."""
-    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
-    with mock.patch(async, new=True):
+    asynch = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(asynch, new=True):
         eager_task.apply_async(('1st param',), dict(datetime='now()'))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
@@ -138,8 +139,8 @@ def test_celery__TransactionAwareTask__apply_async__5(
     """It processes the missing kw argument as emtpy dict."""
     # We need to make this a bit complicated as we want to see the actual call
     # of __call__ after the argument handling
-    async = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
-    with mock.patch(async, new=True):
+    asynch = 'z3c.celery.celery.TransactionAwareTask._eager_use_session_'
+    with mock.patch(asynch, new=True):
         eager_task.apply_async(('1st param',))
     task_call = 'z3c.celery.celery.TransactionAwareTask.__call__'
     with mock.patch(task_call) as task_call:
@@ -383,16 +384,22 @@ def test_celery__HandleAfterAbort__1():
     """It returns the message in the exception unicode which was passed in."""
     err = HandleAfterAbort(lambda: None, message=u'test-messäge')
     err()
-    assert u'test-messäge' == unicode(err)
-    assert 'test-messäge' == str(err)
+    if PY3:
+        assert 'test-messäge' == str(err)
+    else:
+        assert u'test-messäge' == unicode(err)
+        assert 'test-messäge' == str(err)
 
 
 def test_celery__HandleAfterAbort__1_5():
     """It returns the message in the exception string which was passed in."""
     err = HandleAfterAbort(lambda: None, message='test-messäge')
     err()
-    assert u'test-messäge' == unicode(err)
-    assert 'test-messäge' == str(err)
+    if PY3:
+        assert 'test-messäge' == str(err)
+    else:
+        assert u'test-messäge' == unicode(err)
+        assert 'test-messäge' == str(err)
 
 
 def test_celery__HandleAfterAbort__2():
