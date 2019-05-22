@@ -32,5 +32,6 @@ z3c\.celery\.celery
    
       Abort
       HandleAfterAbort
+      Retry
    
    

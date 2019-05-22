@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
+from celery.five import python_2_unicode_compatible
 from celery.utils.serialization import raise_with_context
 import ZODB.POSException
 import celery
@@ -24,6 +25,7 @@ import zope.security.management
 log = logging.getLogger(__name__)
 
 
+@python_2_unicode_compatible
 class HandleAfterAbort(RuntimeError):
     """Exception whose callback is executed after ``transaction.abort()``."""
 
@@ -42,9 +44,6 @@ class HandleAfterAbort(RuntimeError):
         self.callback(*self.c_args, **self.c_kwargs)
 
     def __str__(self):
-        return self.message.encode('utf-8')
-
-    def __unicode__(self):
         return self.message
 
 
@@ -215,7 +214,7 @@ class TransactionAwareTask(celery.Task):
     _eager_use_session_ = False  # Hook for tests
 
     def apply_async(self, args=None, kw=None, task_id=None, **options):
-        self._assert_json_serializable(args, kw, task_id, **options)
+        self._assert_json_serializable(args, kw)
         if kw is None:
             kw = {}
         if task_id is None:

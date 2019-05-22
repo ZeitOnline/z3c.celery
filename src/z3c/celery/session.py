@@ -39,10 +39,9 @@ class CelerySession(threading.local):
 celery_session = CelerySession()
 
 
+@zope.interface.implementer(transaction.interfaces.IDataManager)
 class CeleryDataManager(object):
     """DataManager embedding the access to celery into the transaction."""
-
-    zope.interface.implements(transaction.interfaces.IDataManager)
 
     transaction_manager = None
 

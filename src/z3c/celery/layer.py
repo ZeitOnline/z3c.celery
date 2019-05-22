@@ -33,7 +33,10 @@ class EndToEndLayer(plone.testing.Layer):
 
     def setUp(self):
         request_mock = mock.Mock()
+        # some old celery needs this:
         request_mock.node.get_marker.return_value = {}
+        # celery 4.3.0 needs this:
+        request_mock.node.get_closest_marker.return_value = {}
         self['celery_app_fixture'] = celery.contrib.pytest.celery_session_app(
             request_mock,
             self['celery_config'],
