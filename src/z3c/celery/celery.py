@@ -214,7 +214,7 @@ class TransactionAwareTask(celery.Task):
     _eager_use_session_ = False  # Hook for tests
 
     def apply_async(self, args=None, kw=None, task_id=None, **options):
-        self._assert_json_serializable(args, kw, task_id, **options)
+        self._assert_json_serializable(args, kw)
         if kw is None:
             kw = {}
         if task_id is None:
