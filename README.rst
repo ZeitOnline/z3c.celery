@@ -4,7 +4,7 @@ z3c.celery
 
 Integration of Celery 4 with Zope 3.
 
-This package is compatible with Python version 2.7.
+This package is compatible with Python version 2.7, 3.6 and 3.7.
 
 :Online documentation:
     http://z3ccelery.rtfd.io/
