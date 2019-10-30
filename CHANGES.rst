@@ -5,7 +5,8 @@ Change log for z3c.celery
 1.3.1 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Set the URL of the (fake) zope request (which is used to set the principal) to
+  the task name
 
 
 1.3.0 (2019-05-22)

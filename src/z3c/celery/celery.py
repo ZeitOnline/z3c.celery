@@ -12,6 +12,7 @@ import contextlib
 import json
 import logging
 import random
+import socket
 import time
 import transaction
 import zope.app.publication.zopepublication
@@ -79,9 +80,13 @@ def get_principal(principal_id):
     return auth.getPrincipal(principal_id)
 
 
-def login_principal(principal):
+def login_principal(principal, task_name=None):
     """Start an interaction with `principal`."""
-    request = zope.publisher.browser.TestRequest()
+    request = zope.publisher.browser.TestRequest(
+        environ={'SERVER_URL': 'http://%s' % socket.getfqdn()})
+    if task_name:
+        # I'd rather set PATH_INFO, but that doesn't influence getURL().
+        request._traversed_names = ['celery', task_name]
     request.setPrincipal(principal)
     zope.security.management.newInteraction(request)
 
@@ -179,7 +184,7 @@ class TransactionAwareTask(celery.Task):
     def transaction(self, principal_id):
         if principal_id:
             transaction.begin()
-            login_principal(get_principal(principal_id))
+            login_principal(get_principal(principal_id), self.name)
         try:
             yield
         except Exception:
