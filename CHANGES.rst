@@ -2,6 +2,12 @@
 Change log for z3c.celery
 =========================
 
+1.4.1 (unreleased)
+==================
+
+- Nothing changed yet.
+
+
 1.4.0 (2019-10-30)
 ==================
 
