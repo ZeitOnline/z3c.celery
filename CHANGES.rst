@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.4.1 (unreleased)
+1.4.1 (2019-11-15)
 ==================
 
 - Annotate transaction with principal and task name, like zope.app.publication
