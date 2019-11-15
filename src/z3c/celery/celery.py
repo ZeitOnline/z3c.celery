@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
-from celery.five import python_2_unicode_compatible
+from celery.five import python_2_unicode_compatible, text_t
 from celery.utils.serialization import raise_with_context
 import ZODB.POSException
 import celery
@@ -185,6 +185,9 @@ class TransactionAwareTask(celery.Task):
         if principal_id:
             transaction.begin()
             login_principal(get_principal(principal_id), self.name)
+            txn = transaction.get()
+            txn.setUser(text_t(principal_id))
+            txn.setExtendedInfo('task_name', self.name)
         try:
             yield
         except Exception:
