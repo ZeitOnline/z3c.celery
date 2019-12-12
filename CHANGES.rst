@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.4.2 (unreleased)
+1.4.2 (2019-12-12)
 ==================
 
 - Make HandleAfterAbort compatible with celery-4.1.1 serialization changes
