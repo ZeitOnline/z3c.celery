@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
-from celery.five import python_2_unicode_compatible, text_t
+from celery.five import python_2_unicode_compatible, text_t, string_t
 from celery.utils.serialization import raise_with_context
 import ZODB.POSException
 import celery
@@ -32,6 +32,10 @@ class HandleAfterAbort(RuntimeError):
 
     def __init__(self, callback, *args, **kwargs):
         self.message = kwargs.pop('message', u'')
+        # Conform to BaseException API so it works with celery's serialization
+        # (before 4.1.1 it just worked, but that was rather accidental)
+        if isinstance(callback, string_t):
+            self.message = callback
         if isinstance(self.message, bytes):
             self.message = self.message.decode('utf-8')
 
