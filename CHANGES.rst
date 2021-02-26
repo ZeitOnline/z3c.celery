@@ -5,7 +5,7 @@ Change log for z3c.celery
 1.4.3 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix logging setup
 
 
 1.4.2 (2019-12-12)

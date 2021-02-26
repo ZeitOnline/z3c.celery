@@ -21,8 +21,10 @@ class ZopeLoader(celery.loaders.app.AppLoader):
         def setup_logging(*args, **kw):
             """Make the loglevel finely configurable via a config file."""
             config_file = os.path.abspath(logging_ini)
-            logging.config.fileConfig(config_file, dict(
-                __file__=config_file, here=os.path.dirname(config_file)))
+            logging.config.fileConfig(
+                config_file, dict(
+                    __file__=config_file, here=os.path.dirname(config_file)),
+                disable_existing_loggers=False)
 
         if self.app.conf.get('DEBUG_WORKER'):
             assert self.app.conf.get('worker_pool') == 'solo'
