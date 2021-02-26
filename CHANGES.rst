@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.4.3 (unreleased)
+1.4.3 (2021-02-26)
 ==================
 
 - Fix logging setup

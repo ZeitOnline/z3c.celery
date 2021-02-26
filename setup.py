@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='z3c.celery',
-    version='1.4.3.dev0',
+    version='1.4.3',
 
     install_requires=[
         'celery >= 4.0.2',
