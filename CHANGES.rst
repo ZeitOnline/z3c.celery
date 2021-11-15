@@ -5,7 +5,7 @@ Change log for z3c.celery
 1.4.4 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Provide JsonFormatter if python-json-logger is installed
 
 
 1.4.3 (2021-02-26)

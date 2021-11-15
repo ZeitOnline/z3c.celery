@@ -94,6 +94,7 @@ logging configuration:
     class = z3c.celery.logging.TaskFormatter
     format = %(asctime)s %(task_name)s %(task_id)s %(message)s
 
+If ``python-json-logger`` is installed, we also provide ``z3c.celery.logging.JsonFormatter``.
 
 
 Running end to end tests using layers
