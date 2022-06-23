@@ -7,7 +7,7 @@ import transaction
 import uuid
 
 
-@pytest.yield_fixture('function')
+@pytest.fixture(scope='function')
 def logger_and_stream():
     """Return a logger and the stream it writes to."""
     logger = logging.getLogger(__name__)
