@@ -1,11 +1,10 @@
-from __future__ import absolute_import
 from ..loader import ZopeLoader
 from .shared_tasks import get_principal_title_task
+from unittest import mock
 from zope.principalregistry.principalregistry import principalRegistry
 import celery.signals
 import contextlib
 import logging
-import mock
 import plone.testing.zca
 import pytest
 import tempfile
