@@ -1,5 +1,6 @@
-import collections
 import celery.contrib.testing.app
+import collections
+import contextlib
 import os
 import pkg_resources
 import plone.testing.zca
@@ -18,7 +19,7 @@ ZODBConnection = collections.namedtuple(
     'ZODBConnection', ['connection', 'rootFolder', 'zodb'])
 
 
-@pytest.yield_fixture('function')
+@pytest.fixture(scope='function')
 def zcml():
     """Load ZCML on session scope."""
     layer = plone.testing.zca.ZCMLSandbox(
@@ -32,7 +33,7 @@ def zcml():
     zope.principalregistry.principalregistry.principalRegistry._clear()
 
 
-@pytest.fixture('function', autouse=True)
+@pytest.fixture(scope='function', autouse=True)
 def automatic_transaction_begin():
     """Starts a new transaction for every test.
 
@@ -43,7 +44,7 @@ def automatic_transaction_begin():
     zope.security.management.endInteraction()
 
 
-@pytest.yield_fixture('function')
+@pytest.fixture(scope='function')
 def interaction(automatic_transaction_begin):
     """Provide a zope interaction per test. Yields the principal."""
     principal = zope.security.testing.Principal(
@@ -55,14 +56,20 @@ def interaction(automatic_transaction_begin):
     zope.security.management.endInteraction()
 
 
-@pytest.yield_fixture('session')
+@pytest.fixture(scope='session')
 def storage_file():
     with tempfile.NamedTemporaryFile() as storage_file:
         yield storage_file.name
 
 
-@pytest.yield_fixture('session')
+@pytest.fixture(scope='session')
 def zope_conf(storage_file):
+    with _zope_conf(storage_file) as x:
+        yield x
+
+
+@contextlib.contextmanager
+def _zope_conf(storage_file):
     with tempfile.NamedTemporaryFile() as conf:
         conf.write(
             z3c.celery.testing.ZOPE_CONF_TEMPLATE.format(
@@ -74,7 +81,7 @@ def zope_conf(storage_file):
         yield conf.name
 
 
-@pytest.yield_fixture('function')
+@pytest.fixture(scope='function')
 def eager_celery_app(zope_conf):
     app = z3c.celery.CELERY
     conf = app.conf
@@ -92,6 +99,10 @@ def eager_celery_app(zope_conf):
 
 @pytest.fixture(scope='session')
 def celery_config(zope_conf):
+    return _celery_config(zope_conf)
+
+
+def _celery_config(zope_conf):
     return {
         'broker_url': os.environ['Z3C_CELERY_BROKER'],
         'result_backend': os.environ['Z3C_CELERY_BROKER'],
@@ -104,6 +115,10 @@ def celery_config(zope_conf):
 
 @pytest.fixture(scope='session')
 def celery_parameters():
+    return _celery_parameters()
+
+
+def _celery_parameters():
     return {
         'task_cls': z3c.celery.celery.TransactionAwareTask,
         'strict_typing': False,
