@@ -28,10 +28,7 @@ setup(
 
     extras_require={
         'test': [
-            # newer pytest breaks the hell loose
-            # like https://github.com/pytest-dev/pytest/issues/3950
-            # pytest-remove-stale-bytecode is also incompatible
-            'pytest < 3.8.0',
+            'pytest',
             'pytest-celery',
             'gocept.pytestlayer',
             'plone.testing',
@@ -40,7 +37,6 @@ setup(
             'zope.traversing',
         ],
         'layer': [  # use this extra when using the EndToEndLayer
-            'mock',
             'plone.testing',
         ],
 
