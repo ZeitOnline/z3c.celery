@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='z3c.celery',
-    version='1.5.1.dev0',
+    version='1.6.0.dev0',
 
     install_requires=[
         'celery >= 4.0.2',
@@ -32,6 +32,7 @@ setup(
             # like https://github.com/pytest-dev/pytest/issues/3950
             # pytest-remove-stale-bytecode is also incompatible
             'pytest < 3.8.0',
+            'pytest-celery',
             'gocept.pytestlayer',
             'plone.testing',
             'redis',
