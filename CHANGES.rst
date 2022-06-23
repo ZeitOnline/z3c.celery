@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.6.0 (unreleased)
+1.6.0 (2022-06-23)
 ==================
 
 - Update to celery 5.x, drop Python-2 support
