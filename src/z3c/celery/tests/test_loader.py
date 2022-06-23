@@ -74,7 +74,7 @@ def test_loader__ZopeLoader__on_worker_init__1__cov(
         log_result = logfile.read().decode('utf-8')
 
         assert ('task_id: None name: z3c.celery.tests.test_loader.'
-                'simple_log Hello Log!\n' == log_result)
+                'simple_log Hello Log!\n' in log_result)
 
 
 def test_loader__ZopeLoader__on_worker_process_init__1__cov(
