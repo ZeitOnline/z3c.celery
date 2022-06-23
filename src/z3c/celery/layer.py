@@ -49,6 +49,7 @@ class EndToEndLayer(plone.testing.Layer):
                 request_mock,
                 celery_app,
                 self['celery_includes'],
+                celery_class_tasks=(),
                 celery_worker_pool='prefork',
                 celery_worker_parameters=self['celery_worker_parameters']))
         next(self['celery_worker_fixture'])

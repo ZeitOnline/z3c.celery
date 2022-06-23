@@ -2,10 +2,10 @@
 Change log for z3c.celery
 =========================
 
-1.5.1 (unreleased)
+1.6.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Update to celery 5.x
 
 
 1.5.0 (2021-11-15)
