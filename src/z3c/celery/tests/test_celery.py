@@ -1,15 +1,12 @@
 # coding: utf-8
-from __future__ import absolute_import
-
 from .shared_tasks import get_principal_title_task
 from celery import shared_task
-from celery.five import PY3
 from z3c.celery.celery import HandleAfterAbort, Abort
 from z3c.celery.session import celery_session
 from z3c.celery.testing import open_zodb_copy
 import ZODB.POSException
 import datetime
-import mock
+from unittest import mock
 import pytest
 import transaction
 import z3c.celery
@@ -195,7 +192,7 @@ def conflict_task(bind=True, context=None, datetime=None):
     transaction.get().join(VoteExceptionDataManager())
 
 
-class NoopDatamanager(object):
+class NoopDatamanager:
     """Datamanager which does nothing."""
 
     def abort(self, trans):
@@ -384,22 +381,14 @@ def test_celery__HandleAfterAbort__1():
     """It returns the message in the exception unicode which was passed in."""
     err = HandleAfterAbort(lambda: None, message=u'test-messäge')
     err()
-    if PY3:
-        assert 'test-messäge' == str(err)
-    else:
-        assert u'test-messäge' == unicode(err)
-        assert 'test-messäge' == str(err)
+    assert 'test-messäge' == str(err)
 
 
 def test_celery__HandleAfterAbort__1_5():
     """It returns the message in the exception string which was passed in."""
     err = HandleAfterAbort(lambda: None, message='test-messäge')
     err()
-    if PY3:
-        assert 'test-messäge' == str(err)
-    else:
-        assert u'test-messäge' == unicode(err)
-        assert 'test-messäge' == str(err)
+    assert 'test-messäge' == str(err)
 
 
 def test_celery__HandleAfterAbort__2():

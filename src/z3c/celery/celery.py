@@ -1,8 +1,6 @@
-from __future__ import absolute_import
 from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
-from celery.five import python_2_unicode_compatible, text_t, string_t
 from celery.utils.serialization import raise_with_context
 import ZODB.POSException
 import celery
@@ -26,7 +24,6 @@ import zope.security.management
 log = logging.getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class HandleAfterAbort(RuntimeError):
     """Exception whose callback is executed after ``transaction.abort()``."""
 
@@ -34,12 +31,12 @@ class HandleAfterAbort(RuntimeError):
         self.message = kwargs.pop('message', u'')
         # Conform to BaseException API so it works with celery's serialization
         # (before 4.1.1 it just worked, but that was rather accidental)
-        if isinstance(callback, string_t):
+        if isinstance(callback, str):
             self.message = callback
         if isinstance(self.message, bytes):
             self.message = self.message.decode('utf-8')
 
-        super(HandleAfterAbort, self).__init__(self.message)
+        super().__init__(self.message)
 
         self.callback = callback
         self.c_args = args
@@ -190,7 +187,7 @@ class TransactionAwareTask(celery.Task):
             transaction.begin()
             login_principal(get_principal(principal_id), self.name)
             txn = transaction.get()
-            txn.setUser(text_t(principal_id))
+            txn.setUser(str(principal_id))
             txn.setExtendedInfo('task_name', self.name)
         try:
             yield
@@ -253,15 +250,13 @@ class TransactionAwareTask(celery.Task):
         elif self.name == 'celery.ping':
             # Part of celery.contrib.testing setup, we need to perform this
             # immediately, because it has no transaction integration.
-            return super(TransactionAwareTask, self).apply_async(
-                args, kw, task_id=task_id, **options)
+            return super().apply_async(args, kw, task_id=task_id, **options)
         else:
             # Hook so tests can force __call__ to use run_in_worker even when
             # always_eager is True, by passing in this kw explicitly.
             kw.setdefault('_run_asynchronously_', True)
             celery_session.add_call(
-                super(TransactionAwareTask, self).apply_async,
-                args, kw, task_id, **options)
+                super().apply_async, args, kw, task_id, **options)
         return self.AsyncResult(task_id)
 
     def _assert_json_serializable(self, *args, **kw):

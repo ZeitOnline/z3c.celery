@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-import mock
+from unittest import mock
 import celery.contrib.pytest
 import plone.testing
 import z3c.celery

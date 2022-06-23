@@ -1,7 +1,5 @@
-from __future__ import absolute_import
 from ..logging import TaskFormatter
 from .shared_tasks import shared_logging_task
-from celery.five import PY3
 import logging
 import pytest
 import tempfile
@@ -14,12 +12,8 @@ def logger_and_stream():
     """Return a logger and the stream it writes to."""
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    if PY3:
-        from io import StringIO
-        logged = StringIO()
-    else:
-        import StringIO
-        logged = StringIO.StringIO()
+    from io import StringIO
+    logged = StringIO()
     handler = logging.StreamHandler(logged)
     handler.setFormatter(
         TaskFormatter('task_id: %(task_id)s name: %(task_name)s %(message)s'))

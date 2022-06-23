@@ -33,7 +33,6 @@ setup(
             # pytest-remove-stale-bytecode is also incompatible
             'pytest < 3.8.0',
             'gocept.pytestlayer',
-            'mock',
             'plone.testing',
             'redis',
             'tblib',
@@ -66,9 +65,6 @@ License :: OSI Approved :: BSD License
 Natural Language :: English
 Operating System :: OS Independent
 Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
-Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Database

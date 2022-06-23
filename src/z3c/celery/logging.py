@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from celery._state import get_current_task
 import zope.exceptions.log
 

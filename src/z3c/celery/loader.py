@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import celery.concurrency.asynpool
 import celery.loaders.app
 import celery.signals
@@ -66,7 +65,7 @@ class ZopeLoader(celery.loaders.app.AppLoader):
         """
         module = os.environ.get('CELERY_CONFIG_MODULE')
         if module:
-            return super(ZopeLoader, self).read_configuration()
+            return super().read_configuration()
         pyfile = os.environ.get('CELERY_CONFIG_FILE')
         if pyfile:
             module = self._import_pyfile(pyfile)
