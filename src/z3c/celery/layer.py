@@ -1,5 +1,5 @@
-from unittest import mock
-import celery.contrib.pytest
+from celery.contrib.testing.app import TestApp, setup_default_app
+from celery.contrib.testing.worker import start_worker
 import plone.testing
 import z3c.celery
 
@@ -31,31 +31,21 @@ class EndToEndLayer(plone.testing.Layer):
     """
 
     def setUp(self):
-        request_mock = mock.Mock()
-        # some old celery needs this:
-        request_mock.node.get_marker.return_value = {}
-        # celery 4.3.0 needs this:
-        request_mock.node.get_closest_marker.return_value = {}
-        self['celery_app_fixture'] = celery.contrib.pytest.celery_session_app(
-            request_mock,
-            self['celery_config'],
-            self['celery_parameters'],
-            celery_enable_logging=True,
-            use_celery_app_trap=False)
+        celery_app = TestApp(
+            set_as_current=False, enable_logging=True,
+            config=self['celery_config'], **self['celery_parameters'])
+        self['celery_app_fixture'] = setup_default_app(celery_app)
+        self['celery_app_fixture'].__enter__()
 
-        celery_app = next(self['celery_app_fixture'])
-        self['celery_worker_fixture'] = (
-            celery.contrib.pytest.celery_session_worker(
-                request_mock,
-                celery_app,
-                self['celery_includes'],
-                celery_class_tasks=(),
-                celery_worker_pool='prefork',
-                celery_worker_parameters=self['celery_worker_parameters']))
-        next(self['celery_worker_fixture'])
+        for module in self['celery_includes']:
+            celery_app.loader.import_task_module(module)
+
+        self['celery_worker_fixture'] = start_worker(
+            celery_app, pool='prefork', **self['celery_worker_parameters'])
+        self['celery_worker_fixture'].__enter__()
 
     def tearDown(self):
-        next(self['celery_app_fixture'], None)
+        self['celery_app_fixture'].__exit__(None, None, None)
         del self['celery_app_fixture']
-        next(self['celery_worker_fixture'], None)
+        self['celery_worker_fixture'].__exit__(None, None, None)
         del self['celery_worker_fixture']
