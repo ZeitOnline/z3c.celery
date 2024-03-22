@@ -2,8 +2,8 @@ import celery.concurrency.asynpool
 import celery.loaders.app
 import celery.signals
 import celery.utils.collections
-import imp
 import logging.config
+import types
 import os.path
 import zope.app.wsgi
 
@@ -77,7 +77,7 @@ class ZopeLoader(celery.loaders.app.AppLoader):
 
         (Code inspired by flask.config.Config.from_pyfile)
         """
-        module = imp.new_module('config')
+        module = types.ModuleType('config')
         module.__file__ = filename
         try:
             with open(filename) as config_file:
