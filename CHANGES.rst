@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.7.0 (unreleased)
+1.7.0 (2024-03-22)
 ==================
 
 - Added support for Python 3.12
