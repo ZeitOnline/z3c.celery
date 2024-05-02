@@ -13,7 +13,6 @@ setup(
         'celery >= 4.0.2',
         'setuptools',
         'transaction',
-        'ZODB',
         'zope.app.appsetup',
         'zope.app.publication',
         'zope.app.wsgi',
@@ -28,6 +27,7 @@ setup(
 
     extras_require={
         'test': [
+            'ZODB',
             'pytest',
             'pytest-celery',
             'gocept.pytestlayer',

@@ -2,7 +2,6 @@ from .loader import ZopeLoader
 from .session import celery_session
 from celery._state import _task_stack
 from celery.utils.serialization import raise_with_context
-import ZODB.POSException
 import celery
 import celery.exceptions
 import celery.utils
@@ -197,7 +196,7 @@ class TransactionAwareTask(celery.Task):
         else:
             try:
                 transaction.commit()
-            except ZODB.POSException.ConflictError:
+            except transaction.interfaces.TransientError:
                 log.warning('Conflict while publishing', exc_info=True)
                 transaction.abort()
                 self.retry(
