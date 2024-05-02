@@ -13,7 +13,6 @@ setup(
         'celery >= 4.0.2',
         'setuptools',
         'transaction',
-        'zope.app.appsetup',
         'zope.app.publication',
         'zope.app.wsgi',
         'zope.authentication',
@@ -22,7 +21,6 @@ setup(
         'zope.interface',
         'zope.publisher',
         'zope.security',
-        'zope.principalregistry',
     ],
 
     extras_require={
@@ -34,6 +32,7 @@ setup(
             'plone.testing',
             'redis',
             'tblib',
+            'zope.principalregistry',
             'zope.traversing',
         ],
         'layer': [  # use this extra when using the EndToEndLayer
