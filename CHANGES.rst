@@ -2,7 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.8.0 (unreleased)
+1.8.0 (2024-05-06)
 ==================
 
 - Also apply "retry on ConflictError" when raised by the task execution itself,
