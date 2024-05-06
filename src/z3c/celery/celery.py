@@ -190,6 +190,11 @@ class TransactionAwareTask(celery.Task):
             txn.setExtendedInfo('task_name', self.name)
         try:
             yield
+        except transaction.interfaces.TransientError:
+            log.warning('ConflictError, retrying', exc_info=True)
+            transaction.abort()
+            self.retry(
+                countdown=random.uniform(0, 2 ** self.request.retries))
         except Exception:
             transaction.abort()
             raise

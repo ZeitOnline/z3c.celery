@@ -187,7 +187,7 @@ def test_celery__TransactionAwareTask____call____1__cov(
 
 
 @shared_task(max_retries=1)
-def conflict_task(bind=True, context=None, datetime=None):
+def conflict_on_commit_task(bind=True, context=None, datetime=None):
     """Dummy task which injects a DataManager that votes a ConflictError."""
     transaction.get().join(VoteExceptionDataManager())
 
@@ -223,7 +223,7 @@ class VoteExceptionDataManager(NoopDatamanager):
 def test_celery__TransactionAwareTask____call____2(
         celery_session_worker, interaction):
     """It aborts the transaction and retries in case of an ConflictError."""
-    result = conflict_task.delay()
+    result = conflict_on_commit_task.delay()
     transaction.commit()
     with pytest.raises(Exception) as err:
         result.get()
@@ -256,6 +256,22 @@ def test_celery__TransactionAwareTask____call____2a(eager_celery_app):
             conflict_after_abort_task(_run_asynchronously_=True)
         assert sleep.call_count == 1
         assert conflicts_after_abort == 2
+
+
+@shared_task(max_retries=1)
+def conflict_during_task():
+    raise ZODB.POSException.ConflictError()
+
+
+def test_celery__TransactionAwareTask____call____2b(
+        celery_session_worker, interaction):
+    """It retries on ConflictError caused during task execution
+    (not only caused by commit)."""
+    result = conflict_during_task.delay()
+    transaction.commit()
+    with pytest.raises(Exception) as err:
+        result.get()
+    assert 'MaxRetriesExceededError' == err.value.__class__.__name__
 
 
 def test_celery__TransactionAwareTask____call____3(
