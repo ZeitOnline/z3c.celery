@@ -197,7 +197,7 @@ class TransactionAwareTask(celery.Task):
             try:
                 transaction.commit()
             except transaction.interfaces.TransientError:
-                log.warning('Conflict while publishing', exc_info=True)
+                log.warning('ConflictError, retrying', exc_info=True)
                 transaction.abort()
                 self.retry(
                     countdown=random.uniform(0, 2 ** self.request.retries))
