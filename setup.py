@@ -47,21 +47,19 @@ setup(
         ],
     },
 
-    author='gocept, Zeit Online',
+    author='gocept, DIE ZEIT',
     author_email='zon-backend@zeit.de',
-    license='BSD',
+    license='BSD-3-Clause',
     url='https://github.com/ZeitOnline/z3c.celery',
     keywords='celery Zope transaction',
     classifiers="""\
-Development Status :: 3 - Alpha
+Development Status :: 6 - Mature
 Framework :: Zope3
 Intended Audience :: Developers
-License :: OSI Approved
-License :: OSI Approved :: BSD License
 Natural Language :: English
 Operating System :: OS Independent
 Programming Language :: Python
-Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.13
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Database
 Topic :: Software Development
@@ -72,7 +70,6 @@ Topic :: Software Development :: Testing
         'README.rst',
         'CHANGES.rst',
     )),
-    namespace_packages=['z3c'],
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
