@@ -362,7 +362,7 @@ def test_celery__TransactionAwareTask__run_in_worker__1__cov(
     """
     data = {}
     configure_zope = 'z3c.celery.celery.TransactionAwareTask.configure_zope'
-    with mock.patch(configure_zope),\
+    with mock.patch(configure_zope), \
             mock.patch('zope.component.hooks.getSite', return_value=data):
         zope.security.management.endInteraction()
         with pytest.raises(HandleAfterAbort):
