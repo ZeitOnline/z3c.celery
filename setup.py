@@ -28,11 +28,11 @@ setup(
             'ZODB',
             'pytest',
             'pytest-celery',
-            'gocept.pytestlayer',
             'plone.testing',
             'redis',
             'tblib',
             'zope.principalregistry',
+            'zope.pytestlayer',
             'zope.traversing',
         ],
         'layer': [  # use this extra when using the EndToEndLayer
