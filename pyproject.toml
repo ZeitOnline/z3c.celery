@@ -67,3 +67,13 @@ fragments = [{path="README.rst"}, {text="\n\n"}, {path="CHANGES.rst"}]
 addopts = "--tb=native --cov=src --cov-report=xml --no-cov-on-fail"
 log_format = "(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s"
 consider_namespace_packages = true
+
+
+[tool.towncrier]
+directory = "changelog/"
+filename = "CHANGES.rst"
+
+[[tool.towncrier.type]]
+directory = "change"
+name = ""
+showcontent = true

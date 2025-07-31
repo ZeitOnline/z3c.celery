@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT="$(dirname $DIR)"
+
+cd $ROOT
+
+uv venv --allow-existing
+# `uv version` wants a lock file which we don't use, so use `newversion` instead
+uv pip install towncrier newversion
+export venv=$ROOT/.venv/bin
+
+if $venv/towncrier build --version develop --draft 2>&1 | \
+       grep -q "No significant changes"; then
+    exit 1
+fi
+
+$venv/newversion -p --save stable
+version=$($venv/newversion -p get)
+
+$venv/towncrier build --version="$version" --yes
+git commit pyproject.toml CHANGES.rst changelog/ -m "Preparing release: $version"
+git tag "$version"
+
+uv build
+if [[ -z "$VAULT_TOKEN" ]]; then
+    VAULT_TOKEN=$(<"$HOME/.vault-token")
+fi
+token=$(curl --silent -H "X-Vault-Token: $VAULT_TOKEN" \
+        "${VAULT_ADDR%/}/v1/zon/v1/pypi/zon-backend" | \
+        sed -e 's+^.*"token":"\([^"]*\).*$+\1+')
+uv publish --token "$token"
+
+$venv/newversion -p --save bump minor
+$venv/newversion -p --save bump dev
+$venv/newversion -p --save set micro 0
+version=$($venv/newversion -p get)
+git commit pyproject.toml -m "Back to development: $version"
+
+rm -rf dist
+
+git push
+git push --tags

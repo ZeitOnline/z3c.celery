@@ -9,7 +9,6 @@
 .mr.developer.cfg
 .tox/
 auto-checkout/
-bin/
 build/
 coverage-report/
 develop-eggs/

@@ -2,12 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.9.0 (2025-07-29)
-==================
-
-- Added support for Python 3.13
-- Removed deprecated pkg_resources
-
+.. towncrier release notes start
 
 1.8.0 (2024-05-06)
 ==================
