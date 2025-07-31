@@ -3,7 +3,7 @@
 """Integration of Celery 4 with Zope 3.
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 setup(
     name='z3c.celery',
@@ -11,7 +11,6 @@ setup(
 
     install_requires=[
         'celery >= 4.0.2',
-        'setuptools',
         'transaction',
         'zope.app.publication',
         'zope.app.wsgi',
@@ -70,7 +69,7 @@ Topic :: Software Development :: Testing
         'README.rst',
         'CHANGES.rst',
     )),
-    packages=find_packages('src'),
+    packages=find_namespace_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
     zip_safe=False,
