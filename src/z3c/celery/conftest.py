@@ -2,7 +2,7 @@ import celery.contrib.testing.app
 import collections
 import contextlib
 import os
-import pkg_resources
+import os.path
 import plone.testing.zca
 import pytest
 import tempfile
@@ -74,8 +74,7 @@ def _zope_conf(storage_file):
         conf.write(
             z3c.celery.testing.ZOPE_CONF_TEMPLATE.format(
                 zodb_path=storage_file,
-                ftesting_path=pkg_resources.resource_filename(
-                    'z3c.celery', 'ftesting.zcml'),
+                ftesting_path=os.path.dirname(__file__) + '/ftesting.zcml',
                 product_config='').encode('ascii'))
         conf.flush()
         yield conf.name

@@ -1,0 +1,79 @@
+[project]
+name = "z3c.celery"
+version = "1.9.0.dev0"
+
+requires-python = ">=3.13"
+dependencies = [
+    "celery >= 4.0.2",
+    "transaction",
+    "zope.app.publication",
+    "zope.app.wsgi",
+    "zope.authentication",
+    "zope.component",
+    "zope.exceptions",
+    "zope.interface",
+    "zope.publisher",
+    "zope.security",
+]
+
+authors = [{ name = "DIE ZEIT, gocept", email = "zon-backend@zeit.de" }]
+license = {text="BSD-3-Clause"}
+urls = {repository="https://github.com/ZeitOnline/z3c.celery"}
+description = "Integration of Celery 4 with Zope 3"
+keywords = ["celery", "Zope", "transaction"]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Framework :: Zope3",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Database",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.optional-dependencies]
+test = [
+    "ZODB",
+    "pytest",
+    "pytest-celery",
+    "plone.testing",
+    "redis",
+    "tblib",
+    "zope.principalregistry",
+    "zope.pytestlayer",
+    "zope.traversing",
+]
+# use this extra when using the EndToEndLayer
+layer = ["plone.testing"]
+
+
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/z3c"]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/x-rst"
+fragments = [{path="README.rst"}, {text="\n\n"}, {path="CHANGES.rst"}]
+
+
+[tool.pytest.ini_options]
+addopts = "--tb=native --cov=src --cov-report=xml --no-cov-on-fail"
+log_format = "(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s"
+consider_namespace_packages = true
+
+
+[tool.towncrier]
+directory = "changelog/"
+filename = "CHANGES.rst"
+
+[[tool.towncrier.type]]
+directory = "change"
+name = ""
+showcontent = true

@@ -2,11 +2,7 @@
 Change log for z3c.celery
 =========================
 
-1.9.0 (unreleased)
-==================
-
-- Nothing changed yet.
-
+.. towncrier release notes start
 
 1.8.0 (2024-05-06)
 ==================
