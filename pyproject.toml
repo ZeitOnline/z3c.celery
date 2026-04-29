@@ -16,7 +16,7 @@ dependencies = [
     "zope.security",
 ]
 
-authors = [{ name = "DIE ZEIT, gocept", email = "zon-backend@zeit.de" }]
+authors = [{ name = "Die ZEIT Online Engineering, gocept", email = "zon-backend@zeit.de" }]
 license = {text="BSD-3-Clause"}
 urls = {repository="https://github.com/ZeitOnline/z3c.celery"}
 description = "Integration of Celery 4 with Zope 3"
