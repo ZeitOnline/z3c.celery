@@ -4,6 +4,15 @@ Change log for z3c.celery
 
 .. towncrier release notes start
 
+z3c.celery 1.10.0 (2026-06-29)
+==============================
+
+
+
+
+- Still clean up endInteraction() if transaction.abort() fails (e.g. due to DB connection being lost) (abort)
+
+
 1.9.0 (2025-08-04)
 ==================
 
