@@ -1,0 +1,1 @@
+Still clean up endInteraction() if transaction.abort() fails (e.g. due to DB connection being lost)
