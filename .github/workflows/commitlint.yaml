@@ -1,0 +1,12 @@
+name: Commit lint
+
+# Release Please derives version and changelog from conventional commits
+# and silently leaves out any other message
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  commitlint:
+    uses: zeitonline/gh-action-workflows/.github/workflows/commit-lint.yaml@288ab646a50fe77f7cf19c3bcd209543fed46982 # 4.9.0

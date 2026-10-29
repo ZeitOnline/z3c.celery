@@ -1,7 +1,6 @@
 [project]
 name = "z3c.celery"
-version = "1.11.0.dev0"
-
+dynamic = ["readme", "version"]
 requires-python = ">=3.13"
 dependencies = [
     "celery >= 4.0.2",
@@ -52,28 +51,21 @@ layer = ["plone.testing"]
 
 
 [build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme"]
+requires = ["hatchling", "hatch-fancy-pypi-readme", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/z3c"]
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
-content-type = "text/x-rst"
-fragments = [{path="README.rst"}, {text="\n\n"}, {path="CHANGES.rst"}]
+content-type = "text/markdown"
+fragments = [{path="README.md"}, {text="\n\n"}, {path="CHANGES.md"}]
 
 
 [tool.pytest.ini_options]
 addopts = "--tb=native --cov=src --cov-report=xml --no-cov-on-fail"
 log_format = "(asctime)s %(levelname)-5.5s [%(name)s][%(threadName)s] %(message)s"
 consider_namespace_packages = true
-
-
-[tool.towncrier]
-directory = "changelog/"
-filename = "CHANGES.rst"
-
-[[tool.towncrier.type]]
-directory = "change"
-name = ""
-showcontent = true
