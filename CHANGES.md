@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.1](https://github.com/ZeitOnline/z3c.celery/compare/1.10.0...1.10.1) (2026-10-30)
+
+
+### Maintenance
+
+* release with Release Please via the shared pypi-release workflow ([#39](https://github.com/ZeitOnline/z3c.celery/issues/39)) ([4bccbd3](https://github.com/ZeitOnline/z3c.celery/commit/4bccbd3e9174ad01278c4d1bccf5201cc82d0193))
+
 ## 1.10.0 (2026-06-29)
 
 - Still clean up endInteraction() if transaction.abort() fails (e.g. due to DB connection being lost) (abort)
